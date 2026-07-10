@@ -421,8 +421,11 @@ window.FLYLIST_SONGS = [
     "titleOriginal": "逆光",
     "artist": "Ado",
     "tag": "Ado",
-    "category": "애니메이션",
-    "group": "애니메이션"
+    "category": "J-POP",
+    "group": "Ado",
+    "updateType": "edit",
+    "updatedAt": "2026-07-10",
+    "updateNote": "사용자 교정"
   },
   {
     "number": "28214",
@@ -507,12 +510,15 @@ window.FLYLIST_SONGS = [
   },
   {
     "number": "28153",
-    "titleKo": "unravel",
+    "titleKo": "Unravel",
     "titleOriginal": "Unravel",
     "artist": "TK from 凛として時雨",
     "tag": "TK from 凛として時雨",
     "category": "애니메이션",
-    "group": "애니메이션"
+    "group": "애니메이션",
+    "updateType": "edit",
+    "updatedAt": "2026-07-10",
+    "updateNote": "사용자 교정"
   },
   {
     "number": "68781",
@@ -1722,12 +1728,15 @@ window.FLYLIST_SONGS = [
   },
   {
     "number": "52412",
-    "titleKo": "시와아와세",
+    "titleKo": "주름 맞추기",
     "titleOriginal": "しわあわせ",
     "artist": "Vaundy",
     "tag": "Vaundy",
     "category": "J-POP",
-    "group": "Vaundy"
+    "group": "Vaundy",
+    "updateType": "edit",
+    "updatedAt": "2026-07-10",
+    "updateNote": "사용자 교정"
   },
   {
     "number": "52988",
@@ -1736,7 +1745,10 @@ window.FLYLIST_SONGS = [
     "artist": "Vaundy",
     "tag": "Vaundy",
     "category": "J-POP",
-    "group": "Vaundy"
+    "group": "Vaundy",
+    "updateType": "edit",
+    "updatedAt": "2026-07-10",
+    "updateNote": "사용자 교정"
   },
   {
     "number": "52428",
@@ -1745,7 +1757,10 @@ window.FLYLIST_SONGS = [
     "artist": "Vaundy",
     "tag": "Vaundy",
     "category": "J-POP",
-    "group": "Vaundy"
+    "group": "Vaundy",
+    "updateType": "edit",
+    "updatedAt": "2026-07-10",
+    "updateNote": "사용자 교정"
   },
   {
     "number": "68807",
@@ -1754,7 +1769,10 @@ window.FLYLIST_SONGS = [
     "artist": "Vaundy",
     "tag": "Vaundy",
     "category": "J-POP",
-    "group": "Vaundy"
+    "group": "Vaundy",
+    "updateType": "edit",
+    "updatedAt": "2026-07-10",
+    "updateNote": "사용자 교정"
   },
   {
     "number": "27762",
@@ -1781,7 +1799,10 @@ window.FLYLIST_SONGS = [
     "artist": "back number",
     "tag": "back number",
     "category": "J-POP",
-    "group": "back number"
+    "group": "back number",
+    "updateType": "edit",
+    "updatedAt": "2026-07-10",
+    "updateNote": "사용자 교정"
   },
   {
     "number": "68719",
@@ -1866,12 +1887,15 @@ window.FLYLIST_SONGS = [
   },
   {
     "number": "68333",
-    "titleKo": "드라이 플라워",
+    "titleKo": "드라이플라워",
     "titleOriginal": "ドライフラワー",
     "artist": "優里",
     "tag": "優里",
     "category": "J-POP",
-    "group": "優里"
+    "group": "優里",
+    "updateType": "edit",
+    "updatedAt": "2026-07-10",
+    "updateNote": "사용자 교정"
   },
   {
     "number": "68553",
@@ -1880,7 +1904,10 @@ window.FLYLIST_SONGS = [
     "artist": "優里",
     "tag": "優里",
     "category": "J-POP",
-    "group": "優里"
+    "group": "優里",
+    "updateType": "edit",
+    "updatedAt": "2026-07-10",
+    "updateNote": "사용자 교정"
   },
   {
     "number": "52773",
@@ -1889,7 +1916,10 @@ window.FLYLIST_SONGS = [
     "artist": "優里",
     "tag": "優里",
     "category": "J-POP",
-    "group": "優里"
+    "group": "優里",
+    "updateType": "edit",
+    "updatedAt": "2026-07-10",
+    "updateNote": "사용자 교정"
   },
   {
     "number": "68381",
@@ -2187,5 +2217,341 @@ window.FLYLIST_SONGS = [
     "tag": "ずっと真夜中でいいのに。",
     "category": "J-POP",
     "group": "ずっと真夜中でいいのに。"
+  },
+  {
+    "number": "52554",
+    "titleKo": "비바리움",
+    "titleOriginal": "ビバリウム",
+    "artist": "Ado",
+    "tag": "Ado",
+    "category": "J-POP",
+    "group": "Ado",
+    "updateType": "new",
+    "updatedAt": "2026-07-09",
+    "updateNote": "TJ 최신곡"
+  },
+  {
+    "number": "52553",
+    "titleKo": "히비카세",
+    "titleOriginal": "ヒビカセ",
+    "artist": "Giga(Feat.初音ミク)",
+    "tag": "Giga",
+    "category": "보카로",
+    "group": "",
+    "updateType": "new",
+    "updatedAt": "2026-07-09",
+    "updateNote": "TJ 최신곡"
+  },
+  {
+    "number": "52552",
+    "titleKo": "프리큐큐",
+    "titleOriginal": "ぷりきゅきゅ",
+    "artist": "CUTIE STREET",
+    "tag": "CUTIE STREET",
+    "category": "J-POP",
+    "group": "CUTIE STREET",
+    "updateType": "new",
+    "updatedAt": "2026-07-07",
+    "updateNote": "TJ 최신곡"
+  },
+  {
+    "number": "52551",
+    "titleKo": "린쥬 러브",
+    "titleOriginal": "リンジュー・ラヴ",
+    "artist": "マカロニえんぴつ",
+    "tag": "マカロニえんぴつ",
+    "category": "J-POP",
+    "group": "マカロニえんぴつ",
+    "updateType": "new",
+    "updatedAt": "2026-07-07",
+    "updateNote": "TJ 최신곡"
+  },
+  {
+    "number": "52550",
+    "titleKo": "변덕",
+    "titleOriginal": "気まぐれ",
+    "artist": "Vaundy",
+    "tag": "Vaundy",
+    "category": "J-POP",
+    "group": "Vaundy",
+    "updateType": "new",
+    "updatedAt": "2026-07-07",
+    "updateNote": "TJ 최신곡"
+  },
+  {
+    "number": "52549",
+    "titleKo": "라스트 버진",
+    "titleOriginal": "ラストバージン",
+    "artist": "RADWIMPS",
+    "tag": "RADWIMPS",
+    "category": "J-POP",
+    "group": "RADWIMPS",
+    "updateType": "new",
+    "updatedAt": "2026-07-02",
+    "updateNote": "TJ 최신곡"
+  },
+  {
+    "number": "52548",
+    "titleKo": "개냐 고양이냐로 죽을 때까지 싸우자!",
+    "titleOriginal": "犬かキャットかで 死ぬまで喧嘩しよう!",
+    "artist": "Official髭男dism",
+    "tag": "Official髭男dism",
+    "category": "J-POP",
+    "group": "Official髭男dism",
+    "updateType": "new",
+    "updatedAt": "2026-07-02",
+    "updateNote": "TJ 최신곡"
+  },
+  {
+    "number": "52547",
+    "titleKo": "삼각 게임",
+    "titleOriginal": "さんかくゲーム",
+    "artist": "『ユイカ』",
+    "tag": "『ユイカ』",
+    "category": "애니메이션",
+    "group": "애니메이션",
+    "updateType": "new",
+    "updatedAt": "2026-07-02",
+    "updateNote": "TJ 최신곡"
+  },
+  {
+    "number": "25822",
+    "titleKo": "리라이트",
+    "titleOriginal": "リライト",
+    "artist": "ASIAN KUNG-FU GENERATION",
+    "tag": "ASIAN KUNG-FU GENERATION",
+    "category": "J-POP",
+    "group": "ASIAN KUNG-FU GENERATION",
+    "updateType": "new",
+    "updatedAt": "2026-07-10",
+    "updateNote": "사용자 교정"
+  },
+  {
+    "number": "26065",
+    "titleKo": "Re:Re:",
+    "titleOriginal": "Re:Re: (ソルファ)",
+    "artist": "ASIAN KUNG-FU GENERATION",
+    "tag": "ASIAN KUNG-FU GENERATION",
+    "category": "J-POP",
+    "group": "ASIAN KUNG-FU GENERATION",
+    "updateType": "new",
+    "updatedAt": "2026-07-10",
+    "updateNote": "사용자 교정"
+  },
+  {
+    "number": "27845",
+    "titleKo": "Re:Re:",
+    "titleOriginal": "Re:Re: (2016ver)",
+    "artist": "ASIAN KUNG-FU GENERATION",
+    "tag": "ASIAN KUNG-FU GENERATION",
+    "category": "J-POP",
+    "group": "ASIAN KUNG-FU GENERATION",
+    "updateType": "new",
+    "updatedAt": "2026-07-10",
+    "updateNote": "사용자 교정"
+  },
+  {
+    "number": "52446",
+    "titleKo": "신 보물섬",
+    "titleOriginal": "新宝島",
+    "artist": "サカナクション",
+    "tag": "サカナクション",
+    "category": "J-POP",
+    "group": "サカナクション",
+    "updateType": "new",
+    "updatedAt": "2026-07-10",
+    "updateNote": "사용자 교정"
+  },
+  {
+    "number": "28805",
+    "titleKo": "드라마투르기",
+    "titleOriginal": "ドラマツルギ",
+    "artist": "Eve",
+    "tag": "Eve",
+    "category": "J-POP",
+    "group": "Eve",
+    "updateType": "new",
+    "updatedAt": "2026-07-10",
+    "updateNote": "사용자 교정"
+  },
+  {
+    "number": "68830",
+    "titleKo": "메피스토",
+    "titleOriginal": "メフィスト",
+    "artist": "女王蜂",
+    "tag": "女王蜂",
+    "category": "J-POP",
+    "group": "女王蜂",
+    "updateType": "new",
+    "updatedAt": "2026-07-10",
+    "updateNote": "사용자 교정"
+  },
+  {
+    "number": "28989",
+    "titleKo": "화염",
+    "titleOriginal": "火炎",
+    "artist": "女王蜂",
+    "tag": "女王蜂",
+    "category": "J-POP",
+    "group": "女王蜂",
+    "updateType": "new",
+    "updatedAt": "2026-07-10",
+    "updateNote": "사용자 교정"
+  },
+  {
+    "number": "52485",
+    "titleKo": "셔터",
+    "titleOriginal": "シャッター",
+    "artist": "優里",
+    "tag": "優里",
+    "category": "J-POP",
+    "group": "優里",
+    "updateType": "new",
+    "updatedAt": "2026-07-10",
+    "updateNote": "사용자 교정"
+  },
+  {
+    "number": "52455",
+    "titleKo": "불가행력",
+    "titleOriginal": "不可幸力",
+    "artist": "Vaundy",
+    "tag": "Vaundy",
+    "category": "J-POP",
+    "group": "Vaundy",
+    "updateType": "new",
+    "updatedAt": "2026-07-10",
+    "updateNote": "사용자 교정"
+  },
+  {
+    "number": "52407",
+    "titleKo": "도쿄 플래시",
+    "titleOriginal": "東京フラッシュ",
+    "artist": "Vaundy",
+    "tag": "Vaundy",
+    "category": "J-POP",
+    "group": "Vaundy",
+    "updateType": "new",
+    "updatedAt": "2026-07-10",
+    "updateNote": "사용자 교정"
+  },
+  {
+    "number": "68633",
+    "titleKo": "벌거벗은 용사",
+    "titleOriginal": "裸の勇者",
+    "artist": "Vaundy",
+    "tag": "Vaundy",
+    "category": "J-POP",
+    "group": "Vaundy",
+    "updateType": "new",
+    "updatedAt": "2026-07-10",
+    "updateNote": "사용자 교정"
+  },
+  {
+    "number": "68722",
+    "titleKo": "체인소 블러드",
+    "titleOriginal": "CHAINSAW BLOOD",
+    "artist": "Vaundy",
+    "tag": "Vaundy",
+    "category": "J-POP",
+    "group": "Vaundy",
+    "updateType": "new",
+    "updatedAt": "2026-07-10",
+    "updateNote": "사용자 교정"
+  },
+  {
+    "number": "28816",
+    "titleKo": "깜빡이",
+    "titleOriginal": "瞬き",
+    "artist": "back number",
+    "tag": "back number",
+    "category": "J-POP",
+    "group": "back number",
+    "updateType": "new",
+    "updatedAt": "2026-07-10",
+    "updateNote": "사용자 교정"
+  },
+  {
+    "number": "68799",
+    "titleKo": "신시대",
+    "titleOriginal": "新時代",
+    "artist": "Ado",
+    "tag": "Ado",
+    "category": "J-POP",
+    "group": "Ado",
+    "updateType": "new",
+    "updatedAt": "2026-07-10",
+    "updateNote": "사용자 교정"
+  },
+  {
+    "number": "68883",
+    "titleKo": "show",
+    "titleOriginal": "唱",
+    "artist": "Ado",
+    "tag": "Ado",
+    "category": "J-POP",
+    "group": "Ado",
+    "updateType": "new",
+    "updatedAt": "2026-07-10",
+    "updateNote": "사용자 교정"
+  },
+  {
+    "number": "25876",
+    "titleKo": "다다다다천사",
+    "titleOriginal": "ダダダダ天使",
+    "artist": "ナナヲアカリ",
+    "tag": "ナナヲアカリ",
+    "category": "J-POP",
+    "group": "ナナヲアカリ",
+    "updateType": "new",
+    "updatedAt": "2026-07-10",
+    "updateNote": "사용자 교정"
+  },
+  {
+    "number": "52536",
+    "titleKo": "튜링 러브",
+    "titleOriginal": "チューリングラブ",
+    "artist": "ナナヲアカリ",
+    "tag": "ナナヲアカリ",
+    "category": "J-POP",
+    "group": "ナナヲアカリ",
+    "updateType": "new",
+    "updatedAt": "2026-07-10",
+    "updateNote": "사용자 교정"
+  },
+  {
+    "number": "52541",
+    "titleKo": "히치콕",
+    "titleOriginal": "ヒッチコック",
+    "artist": "ヨルシカ",
+    "tag": "ヨルシカ",
+    "category": "J-POP",
+    "group": "ヨルシカ",
+    "updateType": "new",
+    "updatedAt": "2026-07-10",
+    "updateNote": "사용자 교정"
+  },
+  {
+    "number": "52529",
+    "titleKo": "열등상등",
+    "titleOriginal": "劣等上等",
+    "artist": "Giga(Feat.鏡音リン,鏡音レン)",
+    "tag": "Giga",
+    "category": "보카로",
+    "group": "",
+    "updateType": "new",
+    "updatedAt": "2026-07-10",
+    "updateNote": "사용자 교정"
+  },
+  {
+    "number": "52505",
+    "titleKo": "텔레파시",
+    "titleOriginal": "テレパシ",
+    "artist": "DECO*27(Feat.初音ミク)",
+    "tag": "DECO*27",
+    "category": "보카로",
+    "group": "",
+    "updateType": "new",
+    "updatedAt": "2026-07-10",
+    "updateNote": "사용자 교정"
   }
 ];

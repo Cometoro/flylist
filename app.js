@@ -1,7 +1,7 @@
 (function () {
   const songs = Array.isArray(window.FLYLIST_SONGS) ? window.FLYLIST_SONGS : [];
   const categories = ["보카로", "버츄얼 아티스트", "애니메이션", "J-POP"];
-  const categoryLabels = ["전체", "업데이트", "즐겨찾기", ...categories];
+  const categoryLabels = ["전체", "즐겨찾기", "업데이트", ...categories];
   const state = {
     query: "",
     category: "전체",
@@ -32,6 +32,7 @@
     "BUMP OF CHICKEN": "범프 오브 치킨",
     "DECO*27": "데코니나",
     "EasyPop": "이지팝",
+    "Giga": "기가",
     "Kanaria": "카나리아",
     "Orangestar": "오렌지스타",
     "TAK": "탁",
@@ -49,8 +50,10 @@
     "巡音ルカ": "메구리네 루카",
     "椎名もた": "시이나 모타",
     "蝶々P": "쵸쵸P",
+    "初音ミク": "하츠네 미쿠",
     "鏡音リン": "카가미네 린",
     "鏡音レン": "카가미네 렌",
+    "重音テト": "카사네 테토",
     "Kobo Kanaeru": "코보 카나에루",
     "星街すいせい": "호시마치 스이세이",
     "トゲナシトゲアリ": "토게나시 토게아리",
@@ -62,6 +65,7 @@
     "RADWIMPS": "래드윔프스",
     "SPYAIR": "스파이에어",
     "TK from 凛として時雨": "TK from 린토시테시구레",
+    "凛として時雨": "린토시테시구레",
     "YOASOBI": "요아소비",
     "supercell": "슈퍼셀",
     "いきものがかり": "이키모노가카리",
@@ -77,12 +81,18 @@
     "King Gnu": "킹누",
     "米津玄師": "요네즈 켄시",
     "ヨルシカ": "요루시카",
+    "ASIAN KUNG-FU GENERATION": "아시안 쿵푸 제너레이션",
+    "サカナクション": "사카낙션",
+    "Eve": "이브",
+    "女王蜂": "여왕벌",
     "Vaundy": "바운디",
     "back number": "백 넘버",
     "あいみょん": "아이묭",
     "Creepy Nuts": "크리피 넛츠",
     "Saucy Dog": "사우시 도그",
     "UNISON SQUARE GARDEN": "유니즌 스퀘어 가든",
+    "ナナヲアカリ": "나나오 아카리",
+    "マカロニえんぴつ": "마카로니 엔피츠",
     "松田聖子": "마츠다 세이코",
     "amazarashi": "아마자라시",
     "tuki.": "츠키",
@@ -365,10 +375,7 @@
 
   function getVisibleChips(song) {
     const chips = [];
-    const alias = getAlias(song);
-    if (alias && shouldShowAlias(song, alias)) {
-      chips.push({ type: "alias", label: alias });
-    }
+    getAliases(song).forEach(alias => chips.push({ type: "alias", label: alias }));
 
     if (isUpdated(song)) {
       const label = updateLabels[song.updateType] || "업데이트";
@@ -378,23 +385,32 @@
     return chips;
   }
 
-  function getAlias(song) {
-    const candidates = getAliasCandidates(song);
-    return candidates.find(Boolean) || "";
+  function getAliases(song) {
+    const seen = new Set();
+    return getAliasCandidates(song)
+      .filter(alias => shouldShowAlias(song, alias))
+      .filter(alias => {
+        const key = normalize(alias);
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .slice(0, 4);
   }
 
   function getAliasCandidates(song) {
     const artistParts = String(song.artist || "")
-      .split(/\s+(?:feat\.|from|×|\+|&)\s+|,\s*/i)
+      .split(/\s*(?:feat\.?|from|×|\+|&|,|，|\/|／|\(|\)|（|）)\s*/i)
       .map(part => part.trim())
       .filter(Boolean);
+    const tagAlias = aliasMap[song.tag];
 
     return [
       aliasMap[song.artist],
-      aliasMap[song.tag],
+      tagAlias,
       aliasMap[song.group],
       ...artistParts.map(part => aliasMap[part]),
-      song.tag
+      tagAlias ? "" : song.tag
     ].filter(Boolean);
   }
 
