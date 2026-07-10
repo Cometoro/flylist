@@ -44,7 +44,7 @@
     "とあ": "토아",
     "まらしぃ": "마라시",
     "みきとP": "미키토P",
-    "ナユタン星人": "나유탄성인",
+    "ナユタン星人": "나유탄 성인",
     "バルーン": "벌룬",
     "巡音ルカ": "메구리네 루카",
     "椎名もた": "시이나 모타",
@@ -79,8 +79,9 @@
     "ヨルシカ": "요루시카",
     "Vaundy": "바운디",
     "back number": "백 넘버",
-    "Creepy Nuts": "크리피 너츠",
-    "Saucy Dog": "사우시 독",
+    "あいみょん": "아이묭",
+    "Creepy Nuts": "크리피 넛츠",
+    "Saucy Dog": "사우시 도그",
     "UNISON SQUARE GARDEN": "유니즌 스퀘어 가든",
     "松田聖子": "마츠다 세이코",
     "amazarashi": "아마자라시",
@@ -365,8 +366,7 @@
   function getVisibleChips(song) {
     const chips = [];
     const alias = getAlias(song);
-    const groupHeadingVisible = Boolean(song.group && !state.query && state.sort === "default");
-    if (alias && shouldShowAlias(song, alias, groupHeadingVisible)) {
+    if (alias && shouldShowAlias(song, alias)) {
       chips.push({ type: "alias", label: alias });
     }
 
@@ -398,11 +398,10 @@
     ].filter(Boolean);
   }
 
-  function shouldShowAlias(song, alias, groupHeadingVisible) {
+  function shouldShowAlias(song, alias) {
     const normalizedAlias = normalize(alias);
     return normalizedAlias &&
-      normalizedAlias !== normalize(song.artist) &&
-      (!groupHeadingVisible || normalizedAlias !== normalize(song.group));
+      normalizedAlias !== normalize(song.artist);
   }
 
   function getSearchText(song) {

@@ -147,7 +147,7 @@ window.FLYLIST_SONGS = [
   },
   {
     "number": "52506",
-    "titleKo": "구쿠라린",
+    "titleKo": "두근 어질",
     "titleOriginal": "きゅうくらりん",
     "artist": "いよわ feat. 可不",
     "tag": "いよわ",
@@ -413,7 +413,7 @@ window.FLYLIST_SONGS = [
     "artist": "Ado",
     "tag": "Ado",
     "category": "애니메이션",
-    "group": "걸즈 밴드 크라이"
+    "group": "애니메이션"
   },
   {
     "number": "68868",
@@ -422,7 +422,7 @@ window.FLYLIST_SONGS = [
     "artist": "Ado",
     "tag": "Ado",
     "category": "애니메이션",
-    "group": "걸즈 밴드 크라이"
+    "group": "애니메이션"
   },
   {
     "number": "28214",
@@ -431,7 +431,7 @@ window.FLYLIST_SONGS = [
     "artist": "KANA-BOON",
     "tag": "KANA-BOON",
     "category": "애니메이션",
-    "group": "걸즈 밴드 크라이"
+    "group": "애니메이션"
   },
   {
     "number": "68047",
@@ -440,7 +440,7 @@ window.FLYLIST_SONGS = [
     "artist": "LiSA",
     "tag": "LiSA",
     "category": "애니메이션",
-    "group": "걸즈 밴드 크라이"
+    "group": "애니메이션"
   },
   {
     "number": "68461",
@@ -449,7 +449,7 @@ window.FLYLIST_SONGS = [
     "artist": "Mrs. GREEN APPLE",
     "tag": "Mrs. GREEN APPLE",
     "category": "애니메이션",
-    "group": "걸즈 밴드 크라이"
+    "group": "애니메이션"
   },
   {
     "number": "52471",
@@ -458,7 +458,7 @@ window.FLYLIST_SONGS = [
     "artist": "MyGO!!!!!",
     "tag": "MyGO!!!!!",
     "category": "애니메이션",
-    "group": "걸즈 밴드 크라이"
+    "group": "애니메이션"
   },
   {
     "number": "27965",
@@ -467,7 +467,7 @@ window.FLYLIST_SONGS = [
     "artist": "RADWIMPS",
     "tag": "RADWIMPS",
     "category": "애니메이션",
-    "group": "걸즈 밴드 크라이"
+    "group": "애니메이션"
   },
   {
     "number": "27944",
@@ -476,7 +476,7 @@ window.FLYLIST_SONGS = [
     "artist": "RADWIMPS",
     "tag": "RADWIMPS",
     "category": "애니메이션",
-    "group": "걸즈 밴드 크라이"
+    "group": "애니메이션"
   },
   {
     "number": "68999",
@@ -485,7 +485,7 @@ window.FLYLIST_SONGS = [
     "artist": "SPYAIR",
     "tag": "SPYAIR",
     "category": "애니메이션",
-    "group": "걸즈 밴드 크라이"
+    "group": "애니메이션"
   },
   {
     "number": "27425",
@@ -494,7 +494,7 @@ window.FLYLIST_SONGS = [
     "artist": "SPYAIR",
     "tag": "SPYAIR",
     "category": "애니메이션",
-    "group": "걸즈 밴드 크라이"
+    "group": "애니메이션"
   },
   {
     "number": "27527",
@@ -503,7 +503,7 @@ window.FLYLIST_SONGS = [
     "artist": "SPYAIR",
     "tag": "SPYAIR",
     "category": "애니메이션",
-    "group": "걸즈 밴드 크라이"
+    "group": "애니메이션"
   },
   {
     "number": "28153",
@@ -512,7 +512,7 @@ window.FLYLIST_SONGS = [
     "artist": "TK from 凛として時雨",
     "tag": "TK from 凛として時雨",
     "category": "애니메이션",
-    "group": "걸즈 밴드 크라이"
+    "group": "애니메이션"
   },
   {
     "number": "68781",
@@ -521,7 +521,7 @@ window.FLYLIST_SONGS = [
     "artist": "YOASOBI",
     "tag": "YOASOBI",
     "category": "애니메이션",
-    "group": "걸즈 밴드 크라이"
+    "group": "애니메이션"
   },
   {
     "number": "27650",
@@ -530,7 +530,7 @@ window.FLYLIST_SONGS = [
     "artist": "supercell",
     "tag": "supercell",
     "category": "애니메이션",
-    "group": "걸즈 밴드 크라이"
+    "group": "애니메이션"
   },
   {
     "number": "27325",
@@ -539,7 +539,7 @@ window.FLYLIST_SONGS = [
     "artist": "いきものがかり",
     "tag": "いきものがかり",
     "category": "애니메이션",
-    "group": "걸즈 밴드 크라이"
+    "group": "애니메이션"
   },
   {
     "number": "52510",
@@ -548,7 +548,7 @@ window.FLYLIST_SONGS = [
     "artist": "なとり",
     "tag": "なとり",
     "category": "애니메이션",
-    "group": "걸즈 밴드 크라이"
+    "group": "애니메이션"
   },
   {
     "number": "52461",
@@ -557,7 +557,7 @@ window.FLYLIST_SONGS = [
     "artist": "アイナ・ジ・エンド",
     "tag": "アイナ・ジ・エンド",
     "category": "애니메이션",
-    "group": "걸즈 밴드 크라이"
+    "group": "애니메이션"
   },
   {
     "number": "68863",
@@ -566,7 +566,7 @@ window.FLYLIST_SONGS = [
     "artist": "キタニタツヤ",
     "tag": "キタニタツヤ",
     "category": "애니메이션",
-    "group": "걸즈 밴드 크라이"
+    "group": "애니메이션"
   },
   {
     "number": "68571",
@@ -575,7 +575,7 @@ window.FLYLIST_SONGS = [
     "artist": "ヒグチアイ",
     "tag": "ヒグチアイ",
     "category": "애니메이션",
-    "group": "걸즈 밴드 크라이"
+    "group": "애니메이션"
   },
   {
     "number": "52724",
@@ -584,7 +584,7 @@ window.FLYLIST_SONGS = [
     "artist": "優里",
     "tag": "優里",
     "category": "애니메이션",
-    "group": "걸즈 밴드 크라이"
+    "group": "애니메이션"
   },
   {
     "number": "25589",
@@ -593,7 +593,7 @@ window.FLYLIST_SONGS = [
     "artist": "和田光司",
     "tag": "和田光司",
     "category": "애니메이션",
-    "group": "걸즈 밴드 크라이"
+    "group": "애니메이션"
   },
   {
     "number": "68460",
@@ -602,7 +602,7 @@ window.FLYLIST_SONGS = [
     "artist": "小野正利",
     "tag": "小野正利",
     "category": "애니메이션",
-    "group": "걸즈 밴드 크라이"
+    "group": "애니메이션"
   },
   {
     "number": "25246",
@@ -611,7 +611,7 @@ window.FLYLIST_SONGS = [
     "artist": "高橋洋子",
     "tag": "高橋洋子",
     "category": "애니메이션",
-    "group": "걸즈 밴드 크라이"
+    "group": "애니메이션"
   },
   {
     "number": "52994",
