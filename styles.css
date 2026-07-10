@@ -217,6 +217,10 @@ h1 span:last-child {
   background: #ffe08a;
 }
 
+.tab[data-category="업데이트"] {
+  background: linear-gradient(135deg, #72e6ff, #39f5d1);
+}
+
 .tab[data-category="보카로"] {
   background: var(--miku);
 }
@@ -372,14 +376,21 @@ select {
 
 .song-tag {
   display: inline-flex;
+  vertical-align: top;
   max-width: 100%;
   margin-top: 7px;
+  margin-right: 5px;
   border-radius: 999px;
   padding: 4px 7px;
   background: #202637;
   color: var(--chip, #dbeafe);
   font-size: 11px;
   line-height: 1.2;
+}
+
+.song-tag.is-update {
+  background: rgba(114, 230, 255, .14);
+  color: #bff5ff;
 }
 
 .favorite {

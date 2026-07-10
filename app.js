@@ -1,7 +1,7 @@
 (function () {
   const songs = Array.isArray(window.FLYLIST_SONGS) ? window.FLYLIST_SONGS : [];
   const categories = ["보카로", "버츄얼 아티스트", "애니메이션", "J-POP"];
-  const categoryLabels = ["전체", "즐겨찾기", ...categories];
+  const categoryLabels = ["전체", "업데이트", "즐겨찾기", ...categories];
   const state = {
     query: "",
     category: "전체",
@@ -25,6 +25,94 @@
     numeric: true,
     sensitivity: "base"
   });
+
+  const aliasMap = {
+    "164": "이치로쿠욘",
+    "40mP": "40미터P",
+    "BUMP OF CHICKEN": "범프 오브 치킨",
+    "DECO*27": "데코니나",
+    "EasyPop": "이지팝",
+    "Kanaria": "카나리아",
+    "Orangestar": "오렌지스타",
+    "TAK": "탁",
+    "doriko": "도리코",
+    "kemu": "케무",
+    "wowaka": "와와카",
+    "いよわ": "이요와",
+    "すりぃ": "스리",
+    "てにをは": "테니오하",
+    "とあ": "토아",
+    "まらしぃ": "마라시",
+    "みきとP": "미키토P",
+    "ナユタン星人": "나유탄성인",
+    "バルーン": "벌룬",
+    "巡音ルカ": "메구리네 루카",
+    "椎名もた": "시이나 모타",
+    "蝶々P": "쵸쵸P",
+    "鏡音リン": "카가미네 린",
+    "鏡音レン": "카가미네 렌",
+    "Kobo Kanaeru": "코보 카나에루",
+    "星街すいせい": "호시마치 스이세이",
+    "トゲナシトゲアリ": "토게나시 토게아리",
+    "Ado": "아도",
+    "KANA-BOON": "카나분",
+    "LiSA": "리사",
+    "Mrs. GREEN APPLE": "미세스 그린 애플",
+    "MyGO!!!!!": "마이고",
+    "RADWIMPS": "래드윔프스",
+    "SPYAIR": "스파이에어",
+    "TK from 凛として時雨": "TK from 린토시테시구레",
+    "YOASOBI": "요아소비",
+    "supercell": "슈퍼셀",
+    "いきものがかり": "이키모노가카리",
+    "なとり": "나토리",
+    "アイナ・ジ・エンド": "아이나 디 엔드",
+    "キタニタツヤ": "키타니 타츠야",
+    "ヒグチアイ": "히구치 아이",
+    "優里": "유우리",
+    "和田光司": "와다 코지",
+    "小野正利": "오노 마사토시",
+    "高橋洋子": "타카하시 요코",
+    "Official髭男dism": "오피셜히게단디즘",
+    "King Gnu": "킹누",
+    "米津玄師": "요네즈 켄시",
+    "ヨルシカ": "요루시카",
+    "Vaundy": "바운디",
+    "back number": "백 넘버",
+    "Creepy Nuts": "크리피 너츠",
+    "Saucy Dog": "사우시 독",
+    "UNISON SQUARE GARDEN": "유니즌 스퀘어 가든",
+    "松田聖子": "마츠다 세이코",
+    "amazarashi": "아마자라시",
+    "tuki.": "츠키",
+    "SEKAI NO OWARI": "세카이노오와리",
+    "涼宮ハルヒ / 平野綾": "스즈미야 하루히 / 히라노 아야",
+    "チョーキューメイ": "초큐메이",
+    "X-JAPAN": "엑스재팬",
+    "Leina": "레이나",
+    "椎名林檎": "시이나 링고",
+    "Novelbright": "노벨브라이트",
+    "星野源": "호시노 겐",
+    "緑黄色社会": "녹황색사회",
+    "DISH//": "디쉬",
+    "yama": "야마",
+    "ロクデナシ": "로쿠데나시",
+    "尾崎豊": "오자키 유타카",
+    "『ユイカ』": "유이카",
+    "Tani Yuuki": "타니 유우키",
+    "シド": "시드",
+    "Hump Back": "험프 백",
+    "藤井風": "후지이 카제",
+    "imase": "이마세",
+    "CUTIE STREET": "큐티 스트리트",
+    "ずっと真夜中でいいのに。": "즛토마요"
+  };
+
+  const updateLabels = {
+    new: "신규",
+    number: "번호 변경",
+    edit: "수정"
+  };
 
   init();
 
@@ -105,6 +193,7 @@
   function render() {
     const filtered = getFilteredSongs();
     els.resultSummary.textContent = `${filtered.length}곡`;
+    els.emptyState.textContent = state.category === "업데이트" ? "업데이트 목록이 없습니다." : "검색 결과가 없습니다.";
     els.emptyState.hidden = filtered.length > 0;
     els.songList.hidden = filtered.length === 0;
     els.songList.replaceChildren(...buildSections(filtered));
@@ -112,9 +201,11 @@
 
   function getFilteredSongs() {
     const filtered = songs.filter(song => {
-      const categoryMatched = state.category === "전체" || state.category === "즐겨찾기" || song.category === state.category;
+      const categoryMatched = state.category === "전체" || state.category === "업데이트" || state.category === "즐겨찾기" || song.category === state.category;
+      const updateMatched = state.category !== "업데이트" || isUpdated(song);
       const favoriteMatched = state.category !== "즐겨찾기" || state.favorites.has(song.number);
       if (!categoryMatched) return false;
+      if (!updateMatched) return false;
       if (!favoriteMatched) return false;
       if (!state.query) return true;
       return getSearchText(song).includes(state.query);
@@ -131,7 +222,7 @@
 
   function buildSections(items) {
     const sections = [];
-    const sectionCategories = state.category === "전체" || state.category === "즐겨찾기" ? categories : [state.category];
+    const sectionCategories = state.category === "전체" || state.category === "업데이트" || state.category === "즐겨찾기" ? categories : [state.category];
 
     sectionCategories.forEach(category => {
       const categorySongs = items.filter(song => song.category === category);
@@ -204,8 +295,13 @@
       <div class="song-title">${escapeHtml(song.titleKo)}</div>
       <div class="song-original">${escapeHtml(song.titleOriginal)}</div>
       <div class="song-artist">${escapeHtml(song.artist)}</div>
-      <div class="song-tag">${escapeHtml(song.tag)}</div>
     `;
+    getVisibleChips(song).forEach(chip => {
+      const chipEl = document.createElement("div");
+      chipEl.className = `song-tag${chip.type === "update" ? " is-update" : ""}`;
+      chipEl.textContent = chip.label;
+      body.append(chipEl);
+    });
 
     const favorite = document.createElement("button");
     favorite.type = "button";
@@ -262,6 +358,53 @@
     }
   }
 
+  function isUpdated(song) {
+    return Boolean(song.updateType || song.updatedAt || song.updateNote);
+  }
+
+  function getVisibleChips(song) {
+    const chips = [];
+    const alias = getAlias(song);
+    const groupHeadingVisible = Boolean(song.group && !state.query && state.sort === "default");
+    if (alias && shouldShowAlias(song, alias, groupHeadingVisible)) {
+      chips.push({ type: "alias", label: alias });
+    }
+
+    if (isUpdated(song)) {
+      const label = updateLabels[song.updateType] || "업데이트";
+      chips.push({ type: "update", label });
+    }
+
+    return chips;
+  }
+
+  function getAlias(song) {
+    const candidates = getAliasCandidates(song);
+    return candidates.find(Boolean) || "";
+  }
+
+  function getAliasCandidates(song) {
+    const artistParts = String(song.artist || "")
+      .split(/\s+(?:feat\.|from|×|\+|&)\s+|,\s*/i)
+      .map(part => part.trim())
+      .filter(Boolean);
+
+    return [
+      aliasMap[song.artist],
+      aliasMap[song.tag],
+      aliasMap[song.group],
+      ...artistParts.map(part => aliasMap[part]),
+      song.tag
+    ].filter(Boolean);
+  }
+
+  function shouldShowAlias(song, alias, groupHeadingVisible) {
+    const normalizedAlias = normalize(alias);
+    return normalizedAlias &&
+      normalizedAlias !== normalize(song.artist) &&
+      (!groupHeadingVisible || normalizedAlias !== normalize(song.group));
+  }
+
   function getSearchText(song) {
     return normalize([
       song.number,
@@ -269,6 +412,7 @@
       song.titleOriginal,
       song.artist,
       song.tag,
+      ...getAliasCandidates(song),
       song.category,
       song.group
     ].join(" "));
