@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b0d14">
+  <title>Flylist</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script src="./data.js" defer></script>
+  <script src="./app.js" defer></script>
+</head>
+<body id="top">
+  <header class="app-header">
+    <div class="brand-row">
+      <div>
+        <div class="badge-row" aria-label="Flylist edition">
+          <span class="badge">TJ SONG BOOK</span>
+          <span class="badge badge-soft">PERSONAL EDITION</span>
+        </div>
+        <h1><span>Fly</span><span>list</span></h1>
+      </div>
+      <div class="credit">Heki · Arte</div>
+    </div>
+
+    <form class="search" role="search">
+      <label class="visually-hidden" for="searchInput">곡 검색</label>
+      <input id="searchInput" type="search" autocomplete="off" placeholder="번호, 제목, 원곡, 가수">
+      <button id="clearSearch" class="icon-button" type="button" aria-label="검색어 지우기">×</button>
+    </form>
+
+    <div id="stats" class="stats" aria-label="곡 수"></div>
+    <nav id="categoryTabs" class="tabs" aria-label="카테고리"></nav>
+  </header>
+
+  <main>
+    <div class="toolbar">
+      <div id="resultSummary" class="result-summary"></div>
+      <label class="select-wrap">
+        <span class="visually-hidden">정렬</span>
+        <select id="sortSelect">
+          <option value="default">기본순</option>
+          <option value="number">번호순</option>
+          <option value="artist">가수순</option>
+          <option value="title">제목순</option>
+        </select>
+      </label>
+    </div>
+
+    <section id="songList" class="song-list" aria-live="polite"></section>
+    <p id="emptyState" class="empty-state" hidden>검색 결과가 없습니다.</p>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <a class="top-link" href="#top" aria-label="맨 위로">↑</a>
+</body>
+</html>
