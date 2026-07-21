@@ -1,15 +1,25 @@
 (function () {
   const songs = Array.isArray(window.FLYLIST_SONGS) ? window.FLYLIST_SONGS : [];
   const categories = ["보카로", "버츄얼 아티스트", "애니메이션", "J-POP"];
-  const categoryLabels = ["전체", "즐겨찾기", "업데이트", ...categories];
+  const categoryLabels = ["전체", "업데이트", "아티스트별", ...categories, "즐겨찾기"];
+  const favoriteCategoryLabels = ["전체", ...categories];
   const state = {
     query: "",
     category: "전체",
+    favoriteCategory: "전체",
     sort: "default",
-    favorites: loadFavorites()
+    view: location.hash === "#favorites" ? "favorites" : "main",
+    favorites: loadSet("flylist:favorites"),
+    artistFavorites: loadSet("flylist:favorite-artists"),
+    favoriteExclusions: loadSet("flylist:favorite-exclusions"),
+    expandedGroups: new Set(),
+    activeIndexEntries: []
   };
 
   const els = {
+    mainApp: document.querySelector("#mainApp"),
+    mainView: document.querySelector("#mainView"),
+    favoritesView: document.querySelector("#favoritesView"),
     searchInput: document.querySelector("#searchInput"),
     clearSearch: document.querySelector("#clearSearch"),
     stats: document.querySelector("#stats"),
@@ -18,6 +28,16 @@
     resultSummary: document.querySelector("#resultSummary"),
     songList: document.querySelector("#songList"),
     emptyState: document.querySelector("#emptyState"),
+    updateSummary: document.querySelector("#updateSummary"),
+    sectionIndex: document.querySelector("#sectionIndex"),
+    favoritesBack: document.querySelector("#favoritesBack"),
+    favoriteCategoryTabs: document.querySelector("#favoriteCategoryTabs"),
+    favoriteResultSummary: document.querySelector("#favoriteResultSummary"),
+    favoriteSongList: document.querySelector("#favoriteSongList"),
+    favoriteEmptyState: document.querySelector("#favoriteEmptyState"),
+    favoriteSectionIndex: document.querySelector("#favoriteSectionIndex"),
+    indexDrawer: document.querySelector("#indexDrawer"),
+    indexDrawerNav: document.querySelector("#indexDrawerNav"),
     toast: document.querySelector("#toast")
   };
 
@@ -49,6 +69,15 @@
     "バルーン": "벌룬",
     "巡音ルカ": "메구리네 루카",
     "椎名もた": "시이나 모타",
+    "ツミキ": "츠미키",
+    "可不": "카후",
+    "HoneyWorks": "허니웍스",
+    "かぴ": "카피",
+    "jon-YAKITORY": "존 야키토리",
+    "手嶌葵": "테시마 아오이",
+    "しぐれうい": "시구레 우이",
+    "サツキ": "사츠키",
+    "かいりきベア": "카이리키 베어",
     "蝶々P": "쵸쵸P",
     "初音ミク": "하츠네 미쿠",
     "鏡音リン": "카가미네 린",
@@ -56,6 +85,7 @@
     "重音テト": "카사네 테토",
     "Kobo Kanaeru": "코보 카나에루",
     "星街すいせい": "호시마치 스이세이",
+    "아이리 칸나": "아이리칸나",
     "トゲナシトゲアリ": "토게나시 토게아리",
     "Ado": "아도",
     "KANA-BOON": "카나분",
@@ -116,124 +146,257 @@
     "藤井風": "후지이 카제",
     "imase": "이마세",
     "CUTIE STREET": "큐티 스트리트",
+    "CANDY TUNE": "캔디 튠",
+    "楽音": "사사네",
     "ずっと真夜中でいいのに。": "즛토마요"
   };
+  const normalizedAliasMap = new Map(
+    Object.entries(aliasMap).map(([name, alias]) => [normalizeIdentity(name), alias])
+  );
 
   const updateLabels = {
     new: "신규",
     number: "번호 변경",
     edit: "수정"
   };
+  let sectionSequence = 0;
+  let sectionPrefix = "main";
+  let indexScrollHandler = null;
+  let indexScrollFrame = 0;
+  let indexSettleTimer = 0;
 
   init();
 
   function init() {
+    pruneFavoriteState();
     renderStats();
     renderTabs();
+    renderFavoriteTabs();
     bindEvents();
-    render();
+    syncViewFromLocation();
+    renderAll();
   }
 
   function bindEvents() {
     els.searchInput.addEventListener("input", () => {
       state.query = normalize(els.searchInput.value);
-      render();
+      renderMain();
     });
 
     els.clearSearch.addEventListener("click", () => {
       els.searchInput.value = "";
       state.query = "";
       els.searchInput.focus();
-      render();
+      renderMain();
     });
 
     els.sortSelect.addEventListener("change", () => {
       state.sort = els.sortSelect.value;
-      render();
+      renderAll();
     });
 
     els.categoryTabs.addEventListener("click", event => {
       const tab = event.target.closest(".tab");
       if (!tab) return;
-      state.category = tab.dataset.category;
-      renderTabs();
-      render();
-    });
-
-    els.songList.addEventListener("click", event => {
-      const favoriteButton = event.target.closest(".favorite");
-      if (favoriteButton) {
-        toggleFavorite(favoriteButton.dataset.number);
-        render();
+      const category = tab.dataset.category;
+      if (category === "즐겨찾기") {
+        openFavorites(true);
         return;
       }
-
-      const numberButton = event.target.closest(".song-number");
-      if (numberButton) copyNumber(numberButton.dataset.number);
+      state.category = category;
+      renderTabs();
+      renderMain();
+      scrollToTop();
     });
+
+    els.favoriteCategoryTabs.addEventListener("click", event => {
+      const tab = event.target.closest(".favorite-tab");
+      if (!tab) return;
+      state.favoriteCategory = tab.dataset.category;
+      renderFavoriteTabs();
+      renderFavorites();
+      scrollToTop();
+    });
+
+    els.favoritesBack.addEventListener("click", () => {
+      if (location.hash === "#favorites" && history.length > 1) {
+        history.back();
+      } else {
+        showMainView();
+      }
+    });
+
+    [els.songList, els.favoriteSongList].forEach(list => {
+      list.addEventListener("click", handleListClick);
+    });
+
+    document.querySelectorAll("[data-open-index]").forEach(button => {
+      button.addEventListener("click", openIndexDrawer);
+    });
+    document.querySelectorAll("[data-close-index]").forEach(button => {
+      button.addEventListener("click", closeIndexDrawer);
+    });
+    els.indexDrawerNav.addEventListener("click", event => {
+      const button = event.target.closest("[data-target]");
+      if (!button) return;
+      jumpToSection(button.dataset.target);
+      closeIndexDrawer();
+    });
+
+    window.addEventListener("popstate", syncViewFromLocation);
+  }
+
+  function handleListClick(event) {
+    const favoriteButton = event.target.closest(".favorite");
+    if (favoriteButton) {
+      toggleSongFavorite(favoriteButton.dataset.number);
+      renderAll();
+      bumpFavorite(`[data-number="${favoriteButton.dataset.number}"]`);
+      return;
+    }
+
+    const groupFavorite = event.target.closest(".group-favorite");
+    if (groupFavorite) {
+      toggleGroupFavorite(groupFavorite.dataset.groupId);
+      renderAll();
+      bumpFavorite(`[data-group-id="${cssEscape(groupFavorite.dataset.groupId)}"]`);
+      return;
+    }
+
+    const expandButton = event.target.closest(".group-expand");
+    if (expandButton) {
+      const id = expandButton.dataset.groupId;
+      state.expandedGroups.has(id) ? state.expandedGroups.delete(id) : state.expandedGroups.add(id);
+      renderMain();
+      return;
+    }
+
+    const numberButton = event.target.closest(".song-number");
+    if (numberButton) copyNumber(numberButton.dataset.number);
+  }
+
+  function renderAll() {
+    renderMain();
+    renderFavorites();
   }
 
   function renderStats() {
-    const counts = countByCategory(songs);
-    els.stats.replaceChildren(
-      makeStat("곡", songs.length),
-      ...categories.map(category => makeStat(category, counts[category] || 0))
-    );
-  }
-
-  function makeStat(label, value) {
-    const item = document.createElement("div");
-    item.className = "stat";
-    item.innerHTML = `<b>${value}</b>${escapeHtml(label)}`;
-    return item;
+    els.stats.innerHTML = `현재 <strong>${songs.length}곡</strong> 수록`;
   }
 
   function renderTabs() {
     els.categoryTabs.replaceChildren(...categoryLabels.map(label => {
       const button = document.createElement("button");
       button.type = "button";
-      button.className = "tab";
+      button.className = `tab${label === "업데이트" ? " update-tab" : ""}${label === "즐겨찾기" ? " favorites-tab" : ""}`;
       button.dataset.category = label;
       button.setAttribute("role", "tab");
-      button.setAttribute("aria-selected", String(state.category === label));
-      button.textContent = label;
+      button.setAttribute("aria-selected", String(label !== "즐겨찾기" && state.category === label));
+
+      if (label === "업데이트") {
+        const dot = document.createElement("span");
+        dot.className = "update-dot";
+        dot.setAttribute("aria-hidden", "true");
+        button.append(dot, document.createTextNode(label));
+      } else if (label === "즐겨찾기") {
+        button.append(document.createTextNode(`${label} `));
+        const heart = document.createElement("span");
+        heart.className = "tab-heart";
+        heart.setAttribute("aria-hidden", "true");
+        heart.textContent = "♥";
+        button.append(heart);
+      } else {
+        button.textContent = label;
+      }
       return button;
     }));
   }
 
-  function render() {
-    const filtered = getFilteredSongs();
-    els.resultSummary.textContent = `${filtered.length}곡`;
+  function renderFavoriteTabs() {
+    els.favoriteCategoryTabs.replaceChildren(...favoriteCategoryLabels.map(label => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "favorite-tab";
+      button.dataset.category = label;
+      button.setAttribute("role", "tab");
+      button.setAttribute("aria-selected", String(state.favoriteCategory === label));
+      button.textContent = label === "버츄얼 아티스트" ? "버츄얼" : label;
+      return button;
+    }));
+  }
+
+  function renderMain() {
+    sectionSequence = 0;
+    sectionPrefix = "main";
+    const filtered = getMainSongs();
+    const entries = [];
+    const label = state.category === "아티스트별" ? "아티스트와 프로듀서" : state.category;
+    els.resultSummary.textContent = `${label} · ${filtered.length}곡`;
     els.emptyState.textContent = state.category === "업데이트" ? "업데이트 목록이 없습니다." : "검색 결과가 없습니다.";
     els.emptyState.hidden = filtered.length > 0;
     els.songList.hidden = filtered.length === 0;
-    els.songList.replaceChildren(...buildSections(filtered));
+
+    els.updateSummary.hidden = state.category !== "업데이트";
+    if (state.category === "업데이트") renderUpdateSummary(filtered);
+
+    const content = state.category === "아티스트별"
+      ? buildArtistDirectory(filtered, entries)
+      : buildCategorySections(filtered, entries);
+    els.songList.replaceChildren(...content);
+    renderIndex(els.sectionIndex, entries);
+    if (state.view === "main") activateIndex(entries);
   }
 
-  function getFilteredSongs() {
-    const filtered = songs.filter(song => {
-      const categoryMatched = state.category === "전체" || state.category === "업데이트" || state.category === "즐겨찾기" || song.category === state.category;
+  function renderFavorites() {
+    sectionSequence = 0;
+    sectionPrefix = "favorites";
+    const favoriteSongs = songs.filter(song => {
+      const categoryMatched = state.favoriteCategory === "전체" || song.category === state.favoriteCategory;
+      return categoryMatched && isSongFavorite(song);
+    });
+    const entries = [];
+    const artistCount = new Set(favoriteSongs.map(song => getGroupInfo(song).id)).size;
+    els.favoriteResultSummary.textContent = `${favoriteSongs.length}곡 · ${artistCount}개 그룹`;
+    els.favoriteEmptyState.hidden = favoriteSongs.length > 0;
+    els.favoriteSongList.hidden = favoriteSongs.length === 0;
+    els.favoriteSongList.replaceChildren(...buildCategorySections(favoriteSongs, entries, state.favoriteCategory));
+    renderIndex(els.favoriteSectionIndex, entries);
+    if (state.view === "favorites") activateIndex(entries);
+  }
+
+  function renderUpdateSummary(updatedSongs) {
+    const counts = countByCategory(updatedSongs);
+    const latestDate = updatedSongs
+      .map(song => song.updatedAt || "")
+      .sort()
+      .at(-1) || "";
+    const dateLabel = latestDate ? latestDate.replace(/-/g, ".") : "UPDATE";
+
+    els.updateSummary.innerHTML = `
+      <div class="update-kicker"><span class="update-dot" aria-hidden="true"></span>${escapeHtml(dateLabel)} UPDATE</div>
+      <div class="update-total-row">
+        <strong>신규 ${updatedSongs.length}곡</strong>
+        <div class="update-breakdown">
+          ${categories.map(category => `<span data-category="${escapeHtml(category)}">${escapeHtml(category === "버츄얼 아티스트" ? "버츄얼" : category)} ${counts[category] || 0}곡</span>`).join("")}
+        </div>
+      </div>
+    `;
+  }
+
+  function getMainSongs() {
+    return songs.filter(song => {
+      const categoryMatched = ["전체", "업데이트", "아티스트별"].includes(state.category) || song.category === state.category;
       const updateMatched = state.category !== "업데이트" || isUpdated(song);
-      const favoriteMatched = state.category !== "즐겨찾기" || state.favorites.has(song.number);
-      if (!categoryMatched) return false;
-      if (!updateMatched) return false;
-      if (!favoriteMatched) return false;
-      if (!state.query) return true;
-      return getSearchText(song).includes(state.query);
-    });
-
-    if (state.sort === "default") return filtered;
-
-    return [...filtered].sort((a, b) => {
-      if (state.sort === "number") return Number(a.number) - Number(b.number);
-      if (state.sort === "artist") return collator.compare(a.artist, b.artist) || collator.compare(a.titleKo, b.titleKo);
-      return collator.compare(a.titleKo, b.titleKo) || Number(a.number) - Number(b.number);
+      if (!categoryMatched || !updateMatched) return false;
+      return !state.query || getSearchText(song).includes(state.query);
     });
   }
 
-  function buildSections(items) {
+  function buildCategorySections(items, indexEntries, forcedCategory = "") {
     const sections = [];
-    const sectionCategories = state.category === "전체" || state.category === "업데이트" || state.category === "즐겨찾기" ? categories : [state.category];
+    const sectionCategories = forcedCategory && forcedCategory !== "전체"
+      ? [forcedCategory]
+      : categories;
 
     sectionCategories.forEach(category => {
       const categorySongs = items.filter(song => song.category === category);
@@ -245,47 +408,138 @@
 
       const title = document.createElement("h2");
       title.className = "section-title";
+      title.id = nextSectionId("category");
       title.innerHTML = `${escapeHtml(category)} <small>${categorySongs.length}</small>`;
       section.append(title);
+      indexEntries.push({ id: title.id, label: category, level: "category", category });
 
-      const grouped = groupSongs(categorySongs);
-      grouped.forEach(group => {
-        if (group.name) {
-          const groupTitle = document.createElement("h3");
-          groupTitle.className = "group-title";
-          groupTitle.innerHTML = `${escapeHtml(group.name)} <small>${group.items.length}</small>`;
-          section.append(groupTitle);
-        }
+      groupSongs(categorySongs).forEach(group => {
+        const groupWrap = document.createElement("section");
+        groupWrap.className = "song-group";
+        groupWrap.append(makeGroupHeader(group, false, indexEntries));
 
         const cards = document.createElement("div");
         cards.className = "cards";
-        cards.append(...group.items.map(makeSongCard));
-        section.append(cards);
+        cards.append(...sortSongs(group.items).map(makeSongCard));
+        groupWrap.append(cards);
+        section.append(groupWrap);
       });
-
       sections.push(section);
     });
-
     return sections;
   }
 
-  function groupSongs(items) {
-    const hasGroups = items.some(song => song.group);
-    if (!hasGroups || state.query || state.sort !== "default") {
-      return [{ name: "", items }];
+  function buildArtistDirectory(items, indexEntries) {
+    return groupSongs(items, true).map(group => {
+      const wrap = document.createElement("section");
+      wrap.className = "artist-directory-group song-group";
+      wrap.append(makeGroupHeader(group, true, indexEntries));
+
+      const expanded = state.query || state.expandedGroups.has(group.info.id);
+      const summary = document.createElement("button");
+      summary.type = "button";
+      summary.className = "group-expand";
+      summary.dataset.groupId = group.info.id;
+      summary.setAttribute("aria-expanded", String(Boolean(expanded)));
+      const firstTitle = sortSongs(group.items)[0]?.titleKo || "";
+      summary.innerHTML = `
+        <span class="group-count">${group.items.length}곡</span>
+        <span class="group-preview"><strong>${escapeHtml(firstTitle)}${group.items.length > 1 ? ` 외 ${group.items.length - 1}곡` : ""}</strong><small>${escapeHtml(group.info.type)} 묶음</small></span>
+        <span class="group-chevron" aria-hidden="true">⌄</span>
+      `;
+      wrap.append(summary);
+
+      if (expanded) {
+        const cards = document.createElement("div");
+        cards.className = "cards artist-directory-cards";
+        cards.append(...sortSongs(group.items).map(makeSongCard));
+        wrap.append(cards);
+      }
+      return wrap;
+    });
+  }
+
+  function groupSongs(items, combineCategories = false) {
+    const byId = new Map();
+    items.forEach(song => {
+      const info = getGroupInfo(song);
+      const id = combineCategories ? info.id : `${song.category}:${info.id}`;
+      if (!byId.has(id)) byId.set(id, { info, items: [] });
+      const group = byId.get(id);
+      group.items.push(song);
+      if (!group.info.alias && info.alias) group.info.alias = info.alias;
+    });
+
+    return [...byId.values()].sort((a, b) => {
+      const left = a.info.alias || a.info.name;
+      const right = b.info.alias || b.info.name;
+      return collator.compare(left, right) || collator.compare(a.info.name, b.info.name);
+    });
+  }
+
+  function getGroupInfo(song) {
+    let name = "";
+    let alias = "";
+    let type = "아티스트";
+
+    if (song.category === "보카로") {
+      name = song.tag || song.artist || "기타 프로듀서";
+      alias = shouldAppendAlias(name, song.tagKo) ? song.tagKo : getKnownAlias(name);
+      type = "프로듀서";
+    } else if (song.category === "애니메이션" && isMeaningfulWorkGroup(song.group)) {
+      name = song.group;
+      alias = getKnownAlias(name);
+      type = "작품";
+    } else {
+      name = song.artist || "아티스트 미상";
+      alias = getKnownAlias(name);
     }
 
-    const groups = [];
-    const byName = new Map();
-    items.forEach(song => {
-      const name = song.group || "";
-      if (!byName.has(name)) {
-        byName.set(name, { name, items: [] });
-        groups.push(byName.get(name));
-      }
-      byName.get(name).items.push(song);
+    const canonicalName = alias || name;
+    return {
+      id: `${type}:${normalizeIdentity(canonicalName)}`,
+      name,
+      alias: shouldAppendAlias(name, alias) ? alias : "",
+      type,
+      category: song.category
+    };
+  }
+
+  function isMeaningfulWorkGroup(group) {
+    const value = String(group || "").trim();
+    return value && value !== "애니메이션";
+  }
+
+  function makeGroupHeader(group, collapsible, indexEntries) {
+    const header = document.createElement("div");
+    header.className = "group-title-wrap";
+    header.id = nextSectionId("group");
+
+    const heading = document.createElement("h3");
+    heading.className = "group-title";
+    heading.innerHTML = `${escapeHtml(formatGroupName(group.info))}<small>${escapeHtml(group.info.type)} · ${group.items.length}곡</small>`;
+
+    const favorite = document.createElement("button");
+    favorite.type = "button";
+    favorite.className = "group-favorite";
+    favorite.dataset.groupId = group.info.id;
+    favorite.setAttribute("aria-label", `${formatGroupName(group.info)} 전곡 즐겨찾기`);
+    favorite.setAttribute("aria-pressed", String(state.artistFavorites.has(group.info.id)));
+    favorite.textContent = state.artistFavorites.has(group.info.id) ? "♥" : "♡";
+    if (collapsible) favorite.classList.add("is-directory");
+
+    header.append(heading, favorite);
+    indexEntries.push({
+      id: header.id,
+      label: group.info.name,
+      level: "group",
+      category: group.info.category
     });
-    return groups;
+    return header;
+  }
+
+  function formatGroupName(info) {
+    return info.alias ? `${info.name} · ${info.alias}` : info.name;
   }
 
   function makeSongCard(song) {
@@ -307,23 +561,35 @@
       <div class="song-original">${escapeHtml(song.titleOriginal)}</div>
       <div class="song-artist">${escapeHtml(song.artist)}</div>
     `;
+    const chipRow = document.createElement("div");
+    chipRow.className = "song-tags";
     getVisibleChips(song).forEach(chip => {
-      const chipEl = document.createElement("div");
+      const chipEl = document.createElement("span");
       chipEl.className = `song-tag${chip.type === "update" ? " is-update" : ""}`;
       chipEl.textContent = chip.label;
-      body.append(chipEl);
+      chipRow.append(chipEl);
     });
+    if (chipRow.childElementCount) body.append(chipRow);
 
     const favorite = document.createElement("button");
     favorite.type = "button";
     favorite.className = "favorite";
     favorite.dataset.number = song.number;
+    const pressed = isSongFavorite(song);
     favorite.setAttribute("aria-label", `${song.titleKo} 즐겨찾기`);
-    favorite.setAttribute("aria-pressed", String(state.favorites.has(song.number)));
-    favorite.textContent = state.favorites.has(song.number) ? "★" : "☆";
+    favorite.setAttribute("aria-pressed", String(pressed));
+    favorite.textContent = pressed ? "♥" : "♡";
 
     card.append(number, body, favorite);
     return card;
+  }
+
+  function sortSongs(items) {
+    return [...items].sort((a, b) => {
+      if (state.sort === "number") return Number(a.number) - Number(b.number);
+      if (state.sort === "artist") return collator.compare(a.artist, b.artist) || collator.compare(a.titleKo, b.titleKo);
+      return collator.compare(a.titleKo, b.titleKo) || Number(a.number) - Number(b.number);
+    });
   }
 
   function countByCategory(items) {
@@ -333,15 +599,63 @@
     }, {});
   }
 
-  function toggleFavorite(number) {
-    if (state.favorites.has(number)) {
+  function toggleSongFavorite(number) {
+    const song = songs.find(item => item.number === number);
+    if (!song) return;
+    const groupId = getGroupInfo(song).id;
+    const groupFavorite = state.artistFavorites.has(groupId);
+    const currentlyFavorite = isSongFavorite(song);
+
+    if (groupFavorite) {
+      if (currentlyFavorite) {
+        state.favoriteExclusions.add(number);
+        state.favorites.delete(number);
+        showToast("즐겨찾기에서 제외되었습니다.");
+      } else {
+        state.favoriteExclusions.delete(number);
+        showToast("즐겨찾기에 추가되었습니다.");
+      }
+    } else if (state.favorites.has(number)) {
       state.favorites.delete(number);
-      showToast("즐겨찾기 해제");
+      showToast("즐겨찾기에서 제외되었습니다.");
     } else {
       state.favorites.add(number);
-      showToast("즐겨찾기 추가");
+      state.favoriteExclusions.delete(number);
+      showToast("즐겨찾기에 추가되었습니다.");
     }
-    saveFavorites(state.favorites);
+
+    saveSet("flylist:favorites", state.favorites);
+    saveSet("flylist:favorite-exclusions", state.favoriteExclusions);
+  }
+
+  function toggleGroupFavorite(groupId) {
+    const groupSongs = songs.filter(song => getGroupInfo(song).id === groupId);
+    if (state.artistFavorites.has(groupId)) {
+      state.artistFavorites.delete(groupId);
+      groupSongs.forEach(song => state.favoriteExclusions.delete(song.number));
+      showToast("아티스트 즐겨찾기에서 제외되었습니다.");
+    } else {
+      state.artistFavorites.add(groupId);
+      groupSongs.forEach(song => state.favoriteExclusions.delete(song.number));
+      showToast("아티스트의 모든 곡을 즐겨찾기에 추가했습니다.");
+    }
+    saveSet("flylist:favorite-artists", state.artistFavorites);
+    saveSet("flylist:favorite-exclusions", state.favoriteExclusions);
+  }
+
+  function isSongFavorite(song) {
+    const groupFavorite = state.artistFavorites.has(getGroupInfo(song).id);
+    return state.favorites.has(song.number) || (groupFavorite && !state.favoriteExclusions.has(song.number));
+  }
+
+  function bumpFavorite(selector) {
+    requestAnimationFrame(() => {
+      const visibleRoot = state.view === "favorites" ? els.favoritesView : els.mainApp;
+      const button = visibleRoot.querySelector(`.favorite${selector}, .group-favorite${selector}`);
+      if (!button) return;
+      button.classList.add("is-bumped");
+      setTimeout(() => button.classList.remove("is-bumped"), 420);
+    });
   }
 
   async function copyNumber(number) {
@@ -353,20 +667,31 @@
     }
   }
 
-  function loadFavorites() {
+  function loadSet(key) {
     try {
-      return new Set(JSON.parse(localStorage.getItem("flylist:favorites") || "[]"));
+      return new Set(JSON.parse(localStorage.getItem(key) || "[]"));
     } catch {
       return new Set();
     }
   }
 
-  function saveFavorites(favorites) {
+  function saveSet(key, values) {
     try {
-      localStorage.setItem("flylist:favorites", JSON.stringify([...favorites]));
+      localStorage.setItem(key, JSON.stringify([...values]));
     } catch {
       // Storage can be unavailable in some private browsing modes.
     }
+  }
+
+  function pruneFavoriteState() {
+    const validNumbers = new Set(songs.map(song => song.number));
+    const validGroupIds = new Set(songs.map(song => getGroupInfo(song).id));
+    state.favorites = new Set([...state.favorites].filter(number => validNumbers.has(number)));
+    state.favoriteExclusions = new Set([...state.favoriteExclusions].filter(number => validNumbers.has(number)));
+    state.artistFavorites = new Set([...state.artistFavorites].filter(groupId => validGroupIds.has(groupId)));
+    saveSet("flylist:favorites", state.favorites);
+    saveSet("flylist:favorite-exclusions", state.favoriteExclusions);
+    saveSet("flylist:favorite-artists", state.artistFavorites);
   }
 
   function isUpdated(song) {
@@ -376,12 +701,7 @@
   function getVisibleChips(song) {
     const chips = [];
     getAliases(song).forEach(alias => chips.push({ type: "alias", label: alias }));
-
-    if (isUpdated(song)) {
-      const label = updateLabels[song.updateType] || "업데이트";
-      chips.push({ type: "update", label });
-    }
-
+    if (isUpdated(song)) chips.push({ type: "update", label: updateLabels[song.updateType] || "업데이트" });
     return chips;
   }
 
@@ -403,21 +723,38 @@
       .split(/\s*(?:feat\.?|from|×|\+|&|,|，|\/|／|\(|\)|（|）)\s*/i)
       .map(part => part.trim())
       .filter(Boolean);
-    const tagAlias = aliasMap[song.tag];
+    const tagAlias = shouldAppendAlias(song.tag, song.tagKo) ? song.tagKo : getKnownAlias(song.tag);
 
     return [
-      aliasMap[song.artist],
+      getKnownAlias(song.artist),
       tagAlias,
-      aliasMap[song.group],
-      ...artistParts.map(part => aliasMap[part]),
-      tagAlias ? "" : song.tag
+      getKnownAlias(song.group),
+      ...artistParts.map(getKnownAlias)
     ].filter(Boolean);
   }
 
   function shouldShowAlias(song, alias) {
     const normalizedAlias = normalize(alias);
-    return normalizedAlias &&
-      normalizedAlias !== normalize(song.artist);
+    const group = getGroupInfo(song);
+    return normalizedAlias
+      && normalizedAlias !== normalize(song.artist)
+      && normalizedAlias !== normalize(group.name)
+      && normalizedAlias !== normalize(group.alias);
+  }
+
+  function shouldAppendAlias(name, alias) {
+    return alias && normalizeIdentity(name) !== normalizeIdentity(alias);
+  }
+
+  function getKnownAlias(value) {
+    return normalizedAliasMap.get(normalizeIdentity(value)) || "";
+  }
+
+  function normalizeIdentity(value) {
+    return String(value || "")
+      .normalize("NFKC")
+      .toLocaleLowerCase("ko-KR")
+      .replace(/[^\p{L}\p{N}]+/gu, "");
   }
 
   function getSearchText(song) {
@@ -427,10 +764,131 @@
       song.titleOriginal,
       song.artist,
       song.tag,
+      song.tagKo,
       ...getAliasCandidates(song),
       song.category,
       song.group
     ].join(" "));
+  }
+
+  function renderIndex(container, entries) {
+    container.replaceChildren();
+    if (entries.length < 2) {
+      container.hidden = true;
+      return;
+    }
+    container.hidden = false;
+    const label = document.createElement("div");
+    label.className = "section-index-label";
+    label.textContent = "빠른 이동";
+    container.append(label, ...entries.map(makeIndexButton));
+  }
+
+  function makeIndexButton(entry) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = `section-index-item is-${entry.level}`;
+    button.dataset.target = entry.id;
+    if (entry.category) button.dataset.accent = entry.category;
+    button.textContent = entry.label;
+    button.addEventListener("click", () => jumpToSection(entry.id));
+    return button;
+  }
+
+  function activateIndex(entries) {
+    state.activeIndexEntries = entries;
+    if (indexScrollHandler) {
+      window.removeEventListener("scroll", indexScrollHandler);
+      window.removeEventListener("scrollend", indexScrollHandler);
+    }
+    if (indexScrollFrame) cancelAnimationFrame(indexScrollFrame);
+    const visibleRoot = state.view === "favorites" ? els.favoritesView : els.mainApp;
+    const updateActiveIndex = () => {
+      indexScrollFrame = 0;
+      const anchor = window.innerHeight * 0.5;
+      let current = null;
+      let closestDistance = Number.POSITIVE_INFINITY;
+      entries.forEach(entry => {
+        const target = document.getElementById(entry.id);
+        if (!target) return;
+        const distance = Math.abs(target.getBoundingClientRect().top - anchor);
+        if (distance < closestDistance) {
+          current = entry;
+          closestDistance = distance;
+        }
+      });
+      visibleRoot.querySelectorAll(".section-index-item").forEach(button => {
+        button.setAttribute("aria-current", String(button.dataset.target === current?.id));
+      });
+    };
+
+    indexScrollHandler = () => {
+      if (!indexScrollFrame) indexScrollFrame = requestAnimationFrame(updateActiveIndex);
+    };
+    window.addEventListener("scroll", indexScrollHandler, { passive: true });
+    window.addEventListener("scrollend", indexScrollHandler, { passive: true });
+    updateActiveIndex();
+  }
+
+  function openIndexDrawer() {
+    els.indexDrawerNav.replaceChildren(...state.activeIndexEntries.map(makeIndexButton));
+    els.indexDrawer.hidden = false;
+    document.body.classList.add("drawer-open");
+    els.indexDrawer.querySelector(".drawer-close").focus();
+  }
+
+  function closeIndexDrawer() {
+    els.indexDrawer.hidden = true;
+    document.body.classList.remove("drawer-open");
+  }
+
+  function jumpToSection(id) {
+    const target = document.getElementById(id);
+    if (!target) return;
+    const visibleRoot = state.view === "favorites" ? els.favoritesView : els.mainApp;
+    visibleRoot.querySelectorAll(".section-index-item").forEach(button => {
+      button.setAttribute("aria-current", String(button.dataset.target === id));
+    });
+    target.scrollIntoView({ behavior: "smooth", block: "center" });
+    window.clearTimeout(indexSettleTimer);
+    indexSettleTimer = window.setTimeout(() => {
+      visibleRoot.querySelectorAll(".section-index-item").forEach(button => {
+        button.setAttribute("aria-current", String(button.dataset.target === id));
+      });
+    }, 700);
+  }
+
+  function nextSectionId(prefix) {
+    sectionSequence += 1;
+    return `${sectionPrefix}-${prefix}-${sectionSequence}`;
+  }
+
+  function openFavorites(pushHistory) {
+    if (pushHistory && location.hash !== "#favorites") history.pushState({ view: "favorites" }, "", "#favorites");
+    state.view = "favorites";
+    els.mainApp.hidden = true;
+    els.favoritesView.hidden = false;
+    document.body.classList.add("is-favorites-view");
+    renderFavorites();
+    scrollToTop();
+  }
+
+  function showMainView() {
+    state.view = "main";
+    els.mainApp.hidden = false;
+    els.favoritesView.hidden = true;
+    document.body.classList.remove("is-favorites-view");
+    renderMain();
+    scrollToTop();
+  }
+
+  function syncViewFromLocation() {
+    if (location.hash === "#favorites") openFavorites(false);
+    else showMainView();
+  }
+
+  function scrollToTop() {
+    window.scrollTo({ top: 0, behavior: "auto" });
   }
 
   function normalize(value) {
@@ -438,6 +896,10 @@
       .normalize("NFKC")
       .toLocaleLowerCase("ko-KR")
       .replace(/[\s\u3000·・.\-_/／]+/g, "");
+  }
+
+  function cssEscape(value) {
+    return window.CSS?.escape ? window.CSS.escape(value) : String(value).replace(/["\\]/g, "\\$&");
   }
 
   function escapeHtml(value) {
@@ -453,8 +915,6 @@
     els.toast.textContent = message;
     els.toast.classList.add("is-visible");
     clearTimeout(showToast.timer);
-    showToast.timer = setTimeout(() => {
-      els.toast.classList.remove("is-visible");
-    }, 1300);
+    showToast.timer = setTimeout(() => els.toast.classList.remove("is-visible"), 1500);
   }
 })();

@@ -5,59 +5,105 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0b0d14">
   <title>Flylist</title>
-  <link rel="stylesheet" href="./styles.css">
-  <script src="./data.js" defer></script>
-  <script src="./app.js" defer></script>
+  <link rel="stylesheet" href="./styles.css?v=20260721-3">
+  <script src="./data.js?v=20260721-3" defer></script>
+  <script src="./app.js?v=20260721-3" defer></script>
 </head>
 <body id="top">
-  <header class="app-header">
-    <div class="brand-row">
-      <div>
-        <div class="badge-row" aria-label="Flylist edition">
-          <span class="badge">TJ SONG BOOK</span>
-          <span class="badge badge-soft">PERSONAL EDITION</span>
+  <div id="mainApp">
+    <header class="app-header">
+      <div class="brand-row">
+        <div>
+          <div class="badge-row" aria-label="Flylist edition">
+            <span class="badge">TJ SONG BOOK</span>
+            <span class="badge badge-soft">PERSONAL EDITION</span>
+          </div>
+          <h1><span>Fly</span><span>list</span></h1>
         </div>
-        <h1><span>Fly</span><span>list</span></h1>
-      </div>
-      <div class="brand-meta">
-        <div class="credit">Cometoro X Arte</div>
-        <div class="sound-mark" aria-hidden="true">
-          <span></span>
-          <span></span>
-          <span></span>
-          <span></span>
-          <span></span>
+        <div class="brand-meta">
+          <div class="credit">Cometoro X Arte</div>
+          <div class="sound-mark" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
         </div>
       </div>
+
+      <form class="search" role="search">
+        <label class="visually-hidden" for="searchInput">곡 검색</label>
+        <input id="searchInput" type="search" autocomplete="off" placeholder="번호, 제목, 원제, 아티스트 검색">
+        <button id="clearSearch" class="icon-button" type="button" aria-label="검색어 지우기">×</button>
+      </form>
+
+      <div id="stats" class="stats" aria-label="곡 수"></div>
+      <nav id="categoryTabs" class="tabs" aria-label="카테고리" role="tablist"></nav>
+    </header>
+
+    <main id="mainView">
+      <div class="toolbar">
+        <div id="resultSummary" class="result-summary"></div>
+        <div class="toolbar-actions">
+          <button class="index-button" type="button" data-open-index aria-label="빠른 이동 목차 열기">☷ <span>목차</span></button>
+          <label class="select-wrap">
+            <span class="visually-hidden">정렬</span>
+            <select id="sortSelect">
+              <option value="default">기본순</option>
+              <option value="number">번호순</option>
+              <option value="artist">가수순</option>
+              <option value="title">제목순</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <section id="updateSummary" class="update-summary" hidden></section>
+      <div class="content-layout">
+        <section id="songList" class="song-list" aria-live="polite"></section>
+        <aside id="sectionIndex" class="section-index" aria-label="빠른 이동"></aside>
+      </div>
+      <p id="emptyState" class="empty-state" hidden>검색 결과가 없습니다.</p>
+    </main>
+  </div>
+
+  <section id="favoritesView" class="favorites-view" hidden>
+    <header class="favorites-header">
+      <div class="favorites-header-inner">
+        <button id="favoritesBack" class="back-button" type="button" aria-label="Flylist로 돌아가기">←</button>
+        <div>
+          <h2>즐겨찾기</h2>
+          <p>아티스트와 개별 곡을 한곳에</p>
+        </div>
+        <span class="favorites-mark" aria-hidden="true">♥</span>
+      </div>
+    </header>
+
+    <div class="favorites-inner">
+      <nav id="favoriteCategoryTabs" class="favorite-tabs" aria-label="즐겨찾기 카테고리" role="tablist"></nav>
+      <div class="favorite-toolbar">
+        <div id="favoriteResultSummary" class="result-summary"></div>
+        <button class="index-button" type="button" data-open-index aria-label="즐겨찾기 빠른 이동 목차 열기">☷ <span>목차</span></button>
+      </div>
+      <div class="content-layout">
+        <section id="favoriteSongList" class="song-list" aria-live="polite"></section>
+        <aside id="favoriteSectionIndex" class="section-index" aria-label="즐겨찾기 빠른 이동"></aside>
+      </div>
+      <p id="favoriteEmptyState" class="empty-state" hidden>즐겨찾기한 곡이 없습니다.</p>
     </div>
+  </section>
 
-    <form class="search" role="search">
-      <label class="visually-hidden" for="searchInput">곡 검색</label>
-      <input id="searchInput" type="search" autocomplete="off" placeholder="번호, 제목, 원곡, 가수">
-      <button id="clearSearch" class="icon-button" type="button" aria-label="검색어 지우기">×</button>
-    </form>
-
-    <div id="stats" class="stats" aria-label="곡 수"></div>
-    <nav id="categoryTabs" class="tabs" aria-label="카테고리"></nav>
-  </header>
-
-  <main>
-    <div class="toolbar">
-      <div id="resultSummary" class="result-summary"></div>
-      <label class="select-wrap">
-        <span class="visually-hidden">정렬</span>
-        <select id="sortSelect">
-          <option value="default">기본순</option>
-          <option value="number">번호순</option>
-          <option value="artist">가수순</option>
-          <option value="title">제목순</option>
-        </select>
-      </label>
-    </div>
-
-    <section id="songList" class="song-list" aria-live="polite"></section>
-    <p id="emptyState" class="empty-state" hidden>검색 결과가 없습니다.</p>
-  </main>
+  <div id="indexDrawer" class="index-drawer" hidden>
+    <button class="index-drawer-backdrop" type="button" data-close-index aria-label="목차 닫기"></button>
+    <section class="index-drawer-panel" role="dialog" aria-modal="true" aria-labelledby="indexDrawerTitle">
+      <div class="index-drawer-head">
+        <h2 id="indexDrawerTitle">빠른 이동</h2>
+        <button class="drawer-close" type="button" data-close-index aria-label="목차 닫기">×</button>
+      </div>
+      <nav id="indexDrawerNav" class="index-drawer-nav" aria-label="빠른 이동 항목"></nav>
+    </section>
+  </div>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <a class="top-link" href="#top" aria-label="맨 위로">↑</a>
