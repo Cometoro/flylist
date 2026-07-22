@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0d14">
+  <title>Flylist 데이터 편집기</title>
+  <link rel="stylesheet" href="./editor.css?v=20260722-3">
+  <script src="./data.js?v=20260722-4" defer></script>
+  <script src="./editor.js?v=20260722-4" defer></script>
+</head>
+<body>
+  <header class="editor-header">
+    <div class="header-inner">
+      <div class="brand-block">
+        <a class="brand-link" href="./index.html" aria-label="Flylist로 돌아가기">
+          <span>Fly</span><span>list</span>
+        </a>
+        <div>
+          <p class="eyebrow">DATA EDITOR</p>
+          <h1>곡 데이터 편집기</h1>
+        </div>
+      </div>
+      <div class="header-stats" aria-live="polite">
+        <span><b id="totalCount">0</b>곡</span>
+        <span class="change-stat"><b id="changeCount">0</b>개 변경</span>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="command-bar" aria-label="데이터 명령">
+      <div class="primary-actions">
+        <button class="button button-primary" id="newSong" type="button">새 곡</button>
+        <label class="file-button button" for="importFile">파일 불러오기</label>
+        <input id="importFile" type="file" accept=".js,.json,application/json,text/javascript">
+      </div>
+      <div class="file-actions">
+        <button class="button" id="resetAll" type="button">원본 복원</button>
+        <button class="button" id="downloadData" type="button">data.js 다운로드</button>
+        <button class="button button-save" id="saveData" type="button">data.js 저장</button>
+      </div>
+    </section>
+
+    <section class="editor-workspace">
+      <aside class="song-browser" aria-label="곡 목록">
+        <div class="browser-filters">
+          <label class="search-field">
+            <span class="sr-only">곡 검색</span>
+            <input id="songSearch" type="search" placeholder="번호, 제목, 아티스트 검색" autocomplete="off">
+          </label>
+          <div class="filter-row">
+            <label>
+              <span>분류</span>
+              <select id="categoryFilter">
+                <option value="전체">전체</option>
+                <option value="보카로">보카로</option>
+                <option value="버츄얼 아티스트">버츄얼 아티스트</option>
+                <option value="애니메이션">애니메이션</option>
+                <option value="J-POP">J-POP</option>
+              </select>
+            </label>
+            <label>
+              <span>상태</span>
+              <select id="changeFilter">
+                <option value="전체">전체</option>
+                <option value="변경">변경됨</option>
+                <option value="신규">새로 추가</option>
+              </select>
+            </label>
+          </div>
+        </div>
+        <div class="browser-summary"><span id="resultCount">0</span>곡</div>
+        <div class="song-rows" id="songRows" role="listbox" aria-label="편집할 곡"></div>
+      </aside>
+
+      <section class="edit-panel" aria-label="곡 편집">
+        <div class="empty-selection" id="emptySelection">
+          <strong>선택된 곡 없음</strong>
+        </div>
+
+        <form id="songForm" hidden novalidate>
+          <div class="form-heading">
+            <div>
+              <p class="eyebrow" id="recordState">SONG</p>
+              <h2 id="formTitle">곡 편집</h2>
+            </div>
+            <span class="number-chip" id="numberPreview">TJ -----</span>
+          </div>
+
+          <div class="form-grid">
+            <label class="field field-number">
+              <span>TJ 번호 <i>필수</i></span>
+              <input name="number" inputmode="numeric" maxlength="6" required>
+            </label>
+            <label class="field field-category">
+              <span>분류 <i>필수</i></span>
+              <select name="category" required>
+                <option value="보카로">보카로</option>
+                <option value="버츄얼 아티스트">버츄얼 아티스트</option>
+                <option value="애니메이션">애니메이션</option>
+                <option value="J-POP">J-POP</option>
+              </select>
+            </label>
+            <label class="field field-wide">
+              <span>한국어 제목 <i>필수</i></span>
+              <input name="titleKo" required>
+            </label>
+            <label class="field field-wide">
+              <span>원제 <i>필수</i></span>
+              <input name="titleOriginal" required>
+            </label>
+            <label class="field field-wide">
+              <span>아티스트 <i>필수</i></span>
+              <input name="artist" required>
+            </label>
+            <label class="field">
+              <span>원문 태그 <i>필수</i></span>
+              <input name="tag" required>
+            </label>
+            <label class="field">
+              <span>한국어 태그</span>
+              <input name="tagKo">
+            </label>
+            <div class="field field-wide extra-tag-editor">
+              <span>추가 표시 태그</span>
+              <div class="extra-tag-input-row">
+                <input id="extraTagInput" placeholder="예: 하츠네 미쿠" autocomplete="off">
+                <button class="button" id="addExtraTag" type="button">추가</button>
+              </div>
+              <div class="editor-tag-list" id="extraTagList" aria-label="추가된 표시 태그"></div>
+            </div>
+            <label class="field" title="값이 있으면 아티스트나 프로듀서명 대신 이 이름으로 곡을 묶습니다.">
+              <span>그룹 묶음</span>
+              <input name="group" placeholder="예: 스텔라이브">
+            </label>
+            <label class="field">
+              <span>업데이트 유형</span>
+              <select name="updateType">
+                <option value="">표시 없음</option>
+                <option value="new">신규</option>
+                <option value="updated">수정</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>업데이트 날짜</span>
+              <input name="updatedAt" type="date">
+            </label>
+            <label class="field field-wide">
+              <span>업데이트 메모</span>
+              <input name="updateNote">
+            </label>
+          </div>
+
+          <div class="validation-message" id="validationMessage" role="alert" hidden></div>
+
+          <div class="song-preview" aria-label="곡 미리보기">
+            <span class="preview-number" id="previewNumber">-----</span>
+            <div>
+              <strong id="previewTitle">제목</strong>
+              <p><span id="previewOriginal">원제</span> · <span id="previewArtist">아티스트</span></p>
+            </div>
+            <span class="preview-category" id="previewCategory">분류</span>
+          </div>
+
+          <div class="form-actions">
+            <button class="button button-apply" type="submit">변경 적용</button>
+            <button class="button" id="revertSong" type="button">이 곡 복원</button>
+            <button class="button" id="duplicateSong" type="button">복제</button>
+            <button class="button button-danger" id="deleteSong" type="button">삭제</button>
+          </div>
+        </form>
+      </section>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

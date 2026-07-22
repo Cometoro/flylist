@@ -1,5 +1,6 @@
 (function () {
   const songs = Array.isArray(window.FLYLIST_SONGS) ? window.FLYLIST_SONGS : [];
+  const songsByNumber = new Map(songs.map(song => [song.number, song]));
   const categories = ["보카로", "버츄얼 아티스트", "애니메이션", "J-POP"];
   const categoryLabels = ["전체", "업데이트", "아티스트별", ...categories, "즐겨찾기"];
   const favoriteCategoryLabels = ["전체", ...categories];
@@ -153,17 +154,12 @@
   const normalizedAliasMap = new Map(
     Object.entries(aliasMap).map(([name, alias]) => [normalizeIdentity(name), alias])
   );
-
-  const updateLabels = {
-    new: "신규",
-    number: "번호 변경",
-    edit: "수정"
-  };
+  const searchTextCache = new WeakMap();
   let sectionSequence = 0;
   let sectionPrefix = "main";
-  let indexScrollHandler = null;
-  let indexScrollFrame = 0;
-  let indexSettleTimer = 0;
+  let indexObserver = null;
+  let activeIndexId = "";
+  let searchTimer = 0;
 
   init();
 
@@ -174,25 +170,26 @@
     renderFavoriteTabs();
     bindEvents();
     syncViewFromLocation();
-    renderAll();
   }
 
   function bindEvents() {
     els.searchInput.addEventListener("input", () => {
       state.query = normalize(els.searchInput.value);
-      renderMain();
+      window.clearTimeout(searchTimer);
+      searchTimer = window.setTimeout(renderMain, 100);
     });
 
     els.clearSearch.addEventListener("click", () => {
       els.searchInput.value = "";
       state.query = "";
+      window.clearTimeout(searchTimer);
       els.searchInput.focus();
       renderMain();
     });
 
     els.sortSelect.addEventListener("change", () => {
       state.sort = els.sortSelect.value;
-      renderAll();
+      renderMain();
     });
 
     els.categoryTabs.addEventListener("click", event => {
@@ -236,11 +233,13 @@
     document.querySelectorAll("[data-close-index]").forEach(button => {
       button.addEventListener("click", closeIndexDrawer);
     });
-    els.indexDrawerNav.addEventListener("click", event => {
-      const button = event.target.closest("[data-target]");
-      if (!button) return;
-      jumpToSection(button.dataset.target);
-      closeIndexDrawer();
+    [els.sectionIndex, els.favoriteSectionIndex, els.indexDrawerNav].forEach(index => {
+      index.addEventListener("click", event => {
+        const button = event.target.closest("[data-target]");
+        if (!button) return;
+        jumpToSection(button.dataset.target);
+        if (index === els.indexDrawerNav) closeIndexDrawer();
+      });
     });
 
     window.addEventListener("popstate", syncViewFromLocation);
@@ -250,7 +249,7 @@
     const favoriteButton = event.target.closest(".favorite");
     if (favoriteButton) {
       toggleSongFavorite(favoriteButton.dataset.number);
-      renderAll();
+      renderCurrentView();
       bumpFavorite(`[data-number="${favoriteButton.dataset.number}"]`);
       return;
     }
@@ -258,7 +257,7 @@
     const groupFavorite = event.target.closest(".group-favorite");
     if (groupFavorite) {
       toggleGroupFavorite(groupFavorite.dataset.groupId);
-      renderAll();
+      renderCurrentView();
       bumpFavorite(`[data-group-id="${cssEscape(groupFavorite.dataset.groupId)}"]`);
       return;
     }
@@ -275,9 +274,23 @@
     if (numberButton) copyNumber(numberButton.dataset.number);
   }
 
-  function renderAll() {
-    renderMain();
-    renderFavorites();
+  function renderCurrentView() {
+    if (state.view === "favorites") renderFavorites();
+    else refreshFavoriteButtons(els.songList);
+  }
+
+  function refreshFavoriteButtons(root) {
+    root.querySelectorAll(".favorite").forEach(button => {
+      const song = songsByNumber.get(button.dataset.number);
+      const pressed = song ? isSongFavorite(song) : false;
+      button.setAttribute("aria-pressed", String(pressed));
+      button.textContent = pressed ? "♥" : "♡";
+    });
+    root.querySelectorAll(".group-favorite").forEach(button => {
+      const pressed = state.artistFavorites.has(button.dataset.groupId);
+      button.setAttribute("aria-pressed", String(pressed));
+      button.textContent = pressed ? "♥" : "♡";
+    });
   }
 
   function renderStats() {
@@ -291,7 +304,9 @@
       button.className = `tab${label === "업데이트" ? " update-tab" : ""}${label === "즐겨찾기" ? " favorites-tab" : ""}`;
       button.dataset.category = label;
       button.setAttribute("role", "tab");
-      button.setAttribute("aria-selected", String(label !== "즐겨찾기" && state.category === label));
+      button.setAttribute("aria-selected", String(
+        label === "즐겨찾기" ? state.view === "favorites" : state.view === "main" && state.category === label
+      ));
 
       if (label === "업데이트") {
         const dot = document.createElement("span");
@@ -375,7 +390,7 @@
     els.updateSummary.innerHTML = `
       <div class="update-kicker"><span class="update-dot" aria-hidden="true"></span>${escapeHtml(dateLabel)} UPDATE</div>
       <div class="update-total-row">
-        <strong>신규 ${updatedSongs.length}곡</strong>
+        <strong>총 ${updatedSongs.length}곡</strong>
         <div class="update-breakdown">
           ${categories.map(category => `<span data-category="${escapeHtml(category)}">${escapeHtml(category === "버츄얼 아티스트" ? "버츄얼" : category)} ${counts[category] || 0}곡</span>`).join("")}
         </div>
@@ -409,7 +424,7 @@
       const title = document.createElement("h2");
       title.className = "section-title";
       title.id = nextSectionId("category");
-      title.innerHTML = `${escapeHtml(category)} <small>${categorySongs.length}</small>`;
+      title.innerHTML = `${escapeHtml(category)} <small>${categorySongs.length}곡</small>`;
       section.append(title);
       indexEntries.push({ id: title.id, label: category, level: "category", category });
 
@@ -481,15 +496,18 @@
     let name = "";
     let alias = "";
     let type = "아티스트";
+    const manualGroup = getManualGroup(song);
 
     if (song.category === "보카로") {
-      name = song.tag || song.artist || "기타 프로듀서";
-      alias = shouldAppendAlias(name, song.tagKo) ? song.tagKo : getKnownAlias(name);
+      name = manualGroup || song.tag || song.artist || "기타 프로듀서";
+      alias = manualGroup
+        ? getKnownAlias(name)
+        : shouldAppendAlias(name, song.tagKo) ? song.tagKo : getKnownAlias(name);
       type = "프로듀서";
-    } else if (song.category === "애니메이션" && isMeaningfulWorkGroup(song.group)) {
-      name = song.group;
+    } else if (manualGroup) {
+      name = manualGroup;
       alias = getKnownAlias(name);
-      type = "작품";
+      if (song.category === "애니메이션") type = "작품";
     } else {
       name = song.artist || "아티스트 미상";
       alias = getKnownAlias(name);
@@ -505,9 +523,9 @@
     };
   }
 
-  function isMeaningfulWorkGroup(group) {
-    const value = String(group || "").trim();
-    return value && value !== "애니메이션";
+  function getManualGroup(song) {
+    const value = String(song.group || "").trim();
+    return value && value !== song.category ? value : "";
   }
 
   function makeGroupHeader(group, collapsible, indexEntries) {
@@ -517,7 +535,7 @@
 
     const heading = document.createElement("h3");
     heading.className = "group-title";
-    heading.innerHTML = `${escapeHtml(formatGroupName(group.info))}<small>${escapeHtml(group.info.type)} · ${group.items.length}곡</small>`;
+    heading.innerHTML = `${escapeHtml(formatGroupName(group.info))}<small>${group.items.length}곡 수록</small>`;
 
     const favorite = document.createElement("button");
     favorite.type = "button";
@@ -563,10 +581,10 @@
     `;
     const chipRow = document.createElement("div");
     chipRow.className = "song-tags";
-    getVisibleChips(song).forEach(chip => {
+    getVisibleChips(song).forEach(label => {
       const chipEl = document.createElement("span");
-      chipEl.className = `song-tag${chip.type === "update" ? " is-update" : ""}`;
-      chipEl.textContent = chip.label;
+      chipEl.className = "song-tag";
+      chipEl.textContent = label;
       chipRow.append(chipEl);
     });
     if (chipRow.childElementCount) body.append(chipRow);
@@ -600,7 +618,7 @@
   }
 
   function toggleSongFavorite(number) {
-    const song = songs.find(item => item.number === number);
+    const song = songsByNumber.get(number);
     if (!song) return;
     const groupId = getGroupInfo(song).id;
     const groupFavorite = state.artistFavorites.has(groupId);
@@ -699,10 +717,22 @@
   }
 
   function getVisibleChips(song) {
-    const chips = [];
-    getAliases(song).forEach(alias => chips.push({ type: "alias", label: alias }));
-    if (isUpdated(song)) chips.push({ type: "update", label: updateLabels[song.updateType] || "업데이트" });
-    return chips;
+    const seen = new Set();
+    return [...getCustomTags(song), ...getAliases(song)]
+      .filter(label => {
+        const key = normalize(label);
+        if (!key || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .slice(0, 6);
+  }
+
+  function getCustomTags(song) {
+    const values = Array.isArray(song.tags)
+      ? song.tags
+      : String(song.tags || "").split(",");
+    return values.map(tag => String(tag).trim()).filter(Boolean);
   }
 
   function getAliases(song) {
@@ -758,17 +788,21 @@
   }
 
   function getSearchText(song) {
-    return normalize([
+    if (searchTextCache.has(song)) return searchTextCache.get(song);
+    const value = normalize([
       song.number,
       song.titleKo,
       song.titleOriginal,
       song.artist,
       song.tag,
       song.tagKo,
+      ...getCustomTags(song),
       ...getAliasCandidates(song),
       song.category,
       song.group
     ].join(" "));
+    searchTextCache.set(song, value);
+    return value;
   }
 
   function renderIndex(container, entries) {
@@ -790,44 +824,47 @@
     button.className = `section-index-item is-${entry.level}`;
     button.dataset.target = entry.id;
     if (entry.category) button.dataset.accent = entry.category;
+    button.setAttribute("aria-current", String(entry.id === activeIndexId));
     button.textContent = entry.label;
-    button.addEventListener("click", () => jumpToSection(entry.id));
     return button;
   }
 
   function activateIndex(entries) {
     state.activeIndexEntries = entries;
-    if (indexScrollHandler) {
-      window.removeEventListener("scroll", indexScrollHandler);
-      window.removeEventListener("scrollend", indexScrollHandler);
-    }
-    if (indexScrollFrame) cancelAnimationFrame(indexScrollFrame);
-    const visibleRoot = state.view === "favorites" ? els.favoritesView : els.mainApp;
-    const updateActiveIndex = () => {
-      indexScrollFrame = 0;
-      const anchor = window.innerHeight * 0.5;
-      let current = null;
-      let closestDistance = Number.POSITIVE_INFINITY;
-      entries.forEach(entry => {
-        const target = document.getElementById(entry.id);
-        if (!target) return;
-        const distance = Math.abs(target.getBoundingClientRect().top - anchor);
-        if (distance < closestDistance) {
-          current = entry;
-          closestDistance = distance;
-        }
-      });
-      visibleRoot.querySelectorAll(".section-index-item").forEach(button => {
-        button.setAttribute("aria-current", String(button.dataset.target === current?.id));
-      });
-    };
+    if (indexObserver) indexObserver.disconnect();
+    indexObserver = null;
+    activeIndexId = "";
+    if (!entries.length) return;
 
-    indexScrollHandler = () => {
-      if (!indexScrollFrame) indexScrollFrame = requestAnimationFrame(updateActiveIndex);
-    };
-    window.addEventListener("scroll", indexScrollHandler, { passive: true });
-    window.addEventListener("scrollend", indexScrollHandler, { passive: true });
-    updateActiveIndex();
+    setActiveIndex(entries[0].id);
+    if (!("IntersectionObserver" in window)) return;
+
+    indexObserver = new IntersectionObserver(records => {
+      const visible = records
+        .filter(record => record.isIntersecting)
+        .sort((a, b) => Math.abs(a.boundingClientRect.top - window.innerHeight / 2)
+          - Math.abs(b.boundingClientRect.top - window.innerHeight / 2));
+      if (visible[0]) setActiveIndex(visible[0].target.id);
+    }, {
+      rootMargin: "-45% 0px -45% 0px",
+      threshold: 0
+    });
+
+    entries.forEach(entry => {
+      const target = document.getElementById(entry.id);
+      if (target) indexObserver.observe(target);
+    });
+  }
+
+  function setActiveIndex(id) {
+    if (!id || activeIndexId === id) return;
+    activeIndexId = id;
+    document.querySelectorAll('.section-index-item[aria-current="true"]').forEach(button => {
+      button.setAttribute("aria-current", "false");
+    });
+    document.querySelectorAll(`.section-index-item[data-target="${cssEscape(id)}"]`).forEach(button => {
+      button.setAttribute("aria-current", "true");
+    });
   }
 
   function openIndexDrawer() {
@@ -845,17 +882,8 @@
   function jumpToSection(id) {
     const target = document.getElementById(id);
     if (!target) return;
-    const visibleRoot = state.view === "favorites" ? els.favoritesView : els.mainApp;
-    visibleRoot.querySelectorAll(".section-index-item").forEach(button => {
-      button.setAttribute("aria-current", String(button.dataset.target === id));
-    });
+    setActiveIndex(id);
     target.scrollIntoView({ behavior: "smooth", block: "center" });
-    window.clearTimeout(indexSettleTimer);
-    indexSettleTimer = window.setTimeout(() => {
-      visibleRoot.querySelectorAll(".section-index-item").forEach(button => {
-        button.setAttribute("aria-current", String(button.dataset.target === id));
-      });
-    }, 700);
   }
 
   function nextSectionId(prefix) {
@@ -866,6 +894,7 @@
   function openFavorites(pushHistory) {
     if (pushHistory && location.hash !== "#favorites") history.pushState({ view: "favorites" }, "", "#favorites");
     state.view = "favorites";
+    renderTabs();
     els.mainApp.hidden = true;
     els.favoritesView.hidden = false;
     document.body.classList.add("is-favorites-view");
@@ -875,6 +904,7 @@
 
   function showMainView() {
     state.view = "main";
+    renderTabs();
     els.mainApp.hidden = false;
     els.favoritesView.hidden = true;
     document.body.classList.remove("is-favorites-view");
