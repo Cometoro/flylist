@@ -2085,7 +2085,10 @@ window.FLYLIST_SONGS = [
     "artist": "星野源",
     "tag": "星野源",
     "category": "J-POP",
-    "group": "星野源"
+    "group": "星野源",
+    "tags": [
+      "GOAT"
+    ]
   },
   {
     "number": "68562",
