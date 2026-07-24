@@ -8,7 +8,7 @@
     query: "",
     category: "전체",
     favoriteCategory: "전체",
-    sort: "default",
+    sort: "count-desc",
     view: location.hash === "#favorites" ? "favorites" : "main",
     favorites: loadSet("flylist:favorites"),
     artistFavorites: loadSet("flylist:favorite-artists"),
@@ -66,6 +66,15 @@
     "とあ": "토아",
     "まらしぃ": "마라시",
     "みきとP": "미키토P",
+    "まふまふ": "마후마후",
+    "花たん": "하나땅",
+    "上北健": "카미키타 켄",
+    "KK(上北健)": "카미키타 켄",
+    "Reol": "레오루",
+    "REOL": "레오루",
+    "れをる": "레오루",
+    "ウォルピスカーター": "월피스 카터",
+    "GARNiDELiA": "가르니데리아",
     "ナユタン星人": "나유탄 성인",
     "バルーン": "벌룬",
     "巡音ルカ": "메구리네 루카",
@@ -262,11 +271,11 @@
       return;
     }
 
-    const expandButton = event.target.closest(".group-expand");
+    const expandButton = event.target.closest(".group-toggle, .group-expand");
     if (expandButton) {
       const id = expandButton.dataset.groupId;
       state.expandedGroups.has(id) ? state.expandedGroups.delete(id) : state.expandedGroups.add(id);
-      renderMain();
+      state.view === "favorites" ? renderFavorites() : renderMain();
       return;
     }
 
@@ -356,7 +365,11 @@
 
     const content = state.category === "아티스트별"
       ? buildArtistDirectory(filtered, entries)
-      : buildCategorySections(filtered, entries);
+      : buildCategorySections(
+          filtered,
+          entries,
+          categories.includes(state.category) ? state.category : ""
+        );
     els.songList.replaceChildren(...content);
     renderIndex(els.sectionIndex, entries);
     if (state.view === "main") activateIndex(entries);
@@ -366,7 +379,7 @@
     sectionSequence = 0;
     sectionPrefix = "favorites";
     const favoriteSongs = songs.filter(song => {
-      const categoryMatched = state.favoriteCategory === "전체" || song.category === state.favoriteCategory;
+      const categoryMatched = state.favoriteCategory === "전체" || hasCategory(song, state.favoriteCategory);
       return categoryMatched && isSongFavorite(song);
     });
     const entries = [];
@@ -400,7 +413,7 @@
 
   function getMainSongs() {
     return songs.filter(song => {
-      const categoryMatched = ["전체", "업데이트", "아티스트별"].includes(state.category) || song.category === state.category;
+      const categoryMatched = ["전체", "업데이트", "아티스트별"].includes(state.category) || hasCategory(song, state.category);
       const updateMatched = state.category !== "업데이트" || isUpdated(song);
       if (!categoryMatched || !updateMatched) return false;
       return !state.query || getSearchText(song).includes(state.query);
@@ -414,7 +427,7 @@
       : categories;
 
     sectionCategories.forEach(category => {
-      const categorySongs = items.filter(song => song.category === category);
+      const categorySongs = items.filter(song => hasCategory(song, category));
       if (!categorySongs.length) return;
 
       const section = document.createElement("section");
@@ -428,16 +441,8 @@
       section.append(title);
       indexEntries.push({ id: title.id, label: category, level: "category", category });
 
-      groupSongs(categorySongs).forEach(group => {
-        const groupWrap = document.createElement("section");
-        groupWrap.className = "song-group";
-        groupWrap.append(makeGroupHeader(group, false, indexEntries));
-
-        const cards = document.createElement("div");
-        cards.className = "cards";
-        cards.append(...sortSongs(group.items).map(makeSongCard));
-        groupWrap.append(cards);
-        section.append(groupWrap);
+      groupSongs(categorySongs, false, category).forEach(group => {
+        section.append(makeCollapsibleGroup(group, indexEntries, category));
       });
       sections.push(section);
     });
@@ -445,40 +450,34 @@
   }
 
   function buildArtistDirectory(items, indexEntries) {
-    return groupSongs(items, true).map(group => {
-      const wrap = document.createElement("section");
-      wrap.className = "artist-directory-group song-group";
-      wrap.append(makeGroupHeader(group, true, indexEntries));
-
-      const expanded = state.query || state.expandedGroups.has(group.info.id);
-      const summary = document.createElement("button");
-      summary.type = "button";
-      summary.className = "group-expand";
-      summary.dataset.groupId = group.info.id;
-      summary.setAttribute("aria-expanded", String(Boolean(expanded)));
-      const firstTitle = sortSongs(group.items)[0]?.titleKo || "";
-      summary.innerHTML = `
-        <span class="group-count">${group.items.length}곡</span>
-        <span class="group-preview"><strong>${escapeHtml(firstTitle)}${group.items.length > 1 ? ` 외 ${group.items.length - 1}곡` : ""}</strong><small>${escapeHtml(group.info.type)} 묶음</small></span>
-        <span class="group-chevron" aria-hidden="true">⌄</span>
-      `;
-      wrap.append(summary);
-
-      if (expanded) {
-        const cards = document.createElement("div");
-        cards.className = "cards artist-directory-cards";
-        cards.append(...sortSongs(group.items).map(makeSongCard));
-        wrap.append(cards);
-      }
-      return wrap;
-    });
+    return groupSongs(items, true).map(group => makeCollapsibleGroup(group, indexEntries));
   }
 
-  function groupSongs(items, combineCategories = false) {
+  function makeCollapsibleGroup(group, indexEntries, categoryOverride = "") {
+    const wrap = document.createElement("section");
+    wrap.className = "artist-directory-group song-group is-collapsible";
+    wrap.dataset.accent = categoryOverride || group.info.category;
+
+    const expanded = Boolean(
+      (state.view === "main" && state.query)
+      || state.expandedGroups.has(group.info.id)
+    );
+    wrap.append(makeGroupHeader(group, true, indexEntries, expanded));
+
+    if (expanded) {
+      const cards = document.createElement("div");
+      cards.className = "cards collapsible-group-cards";
+      cards.append(...sortSongs(group.items).map(song => makeSongCard(song, categoryOverride)));
+      wrap.append(cards);
+    }
+    return wrap;
+  }
+
+  function groupSongs(items, combineCategories = false, categoryOverride = "") {
     const byId = new Map();
     items.forEach(song => {
-      const info = getGroupInfo(song);
-      const id = combineCategories ? info.id : `${song.category}:${info.id}`;
+      const info = getGroupInfo(song, categoryOverride);
+      const id = combineCategories ? info.id : `${categoryOverride || song.category}:${info.id}`;
       if (!byId.has(id)) byId.set(id, { info, items: [] });
       const group = byId.get(id);
       group.items.push(song);
@@ -486,28 +485,41 @@
     });
 
     return [...byId.values()].sort((a, b) => {
-      const left = a.info.alias || a.info.name;
-      const right = b.info.alias || b.info.name;
-      return collator.compare(left, right) || collator.compare(a.info.name, b.info.name);
+      const left = a.info.name;
+      const right = b.info.name;
+      if (state.sort === "count-desc" && a.items.length !== b.items.length) {
+        return b.items.length - a.items.length;
+      }
+      if (state.sort === "count-asc" && a.items.length !== b.items.length) {
+        return a.items.length - b.items.length;
+      }
+      return collator.compare(left, right) || collator.compare(a.info.alias, b.info.alias);
     });
   }
 
-  function getGroupInfo(song) {
+  function getGroupInfo(song, categoryOverride = "") {
     let name = "";
     let alias = "";
     let type = "아티스트";
     const manualGroup = getManualGroup(song);
+    const category = categoryOverride || song.category;
+    const categoryGroup = category === "J-POP"
+      ? String(song.jpopGroup || manualGroup).trim()
+      : manualGroup;
 
-    if (song.category === "보카로") {
+    if (category === "보카로") {
       name = manualGroup || song.tag || song.artist || "기타 프로듀서";
       alias = manualGroup
         ? getKnownAlias(name)
         : shouldAppendAlias(name, song.tagKo) ? song.tagKo : getKnownAlias(name);
       type = "프로듀서";
-    } else if (manualGroup) {
-      name = manualGroup;
+    } else if (category === "애니메이션" && categoryGroup) {
+      name = categoryGroup;
       alias = getKnownAlias(name);
-      if (song.category === "애니메이션") type = "작품";
+      type = "작품";
+    } else if (categoryGroup) {
+      name = categoryGroup;
+      alias = getKnownAlias(name);
     } else {
       name = song.artist || "아티스트 미상";
       alias = getKnownAlias(name);
@@ -519,8 +531,21 @@
       name,
       alias: shouldAppendAlias(name, alias) ? alias : "",
       type,
-      category: song.category
+      category
     };
+  }
+
+  function getAlsoCategories(song) {
+    const values = Array.isArray(song.alsoCategories) ? song.alsoCategories : [];
+    return values.filter(category => categories.includes(category) && category !== song.category);
+  }
+
+  function hasCategory(song, category) {
+    return song.category === category || getAlsoCategories(song).includes(category);
+  }
+
+  function getGroupIds(song) {
+    return [...new Set([song.category, ...getAlsoCategories(song)].map(category => getGroupInfo(song, category).id))];
   }
 
   function getManualGroup(song) {
@@ -528,14 +553,28 @@
     return value && value !== song.category ? value : "";
   }
 
-  function makeGroupHeader(group, collapsible, indexEntries) {
+  function makeGroupHeader(group, collapsible, indexEntries, expanded = false) {
     const header = document.createElement("div");
     header.className = "group-title-wrap";
     header.id = nextSectionId("group");
 
     const heading = document.createElement("h3");
     heading.className = "group-title";
-    heading.innerHTML = `${escapeHtml(formatGroupName(group.info))}<small>${group.items.length}곡 수록</small>`;
+    if (collapsible) {
+      const toggle = document.createElement("button");
+      toggle.type = "button";
+      toggle.className = "group-toggle";
+      toggle.dataset.groupId = group.info.id;
+      toggle.setAttribute("aria-expanded", String(expanded));
+      toggle.setAttribute("aria-label", `${formatGroupName(group.info)} ${expanded ? "접기" : "펼치기"}`);
+      toggle.innerHTML = `
+        <span class="group-heading-text">${escapeHtml(formatGroupName(group.info))}<small>${group.items.length}곡 수록</small></span>
+        <span class="group-chevron" aria-hidden="true">⌄</span>
+      `;
+      heading.append(toggle);
+    } else {
+      heading.innerHTML = `${escapeHtml(formatGroupName(group.info))}<small>${group.items.length}곡 수록</small>`;
+    }
 
     const favorite = document.createElement("button");
     favorite.type = "button";
@@ -560,10 +599,10 @@
     return info.alias ? `${info.name} · ${info.alias}` : info.name;
   }
 
-  function makeSongCard(song) {
+  function makeSongCard(song, categoryOverride = "") {
     const card = document.createElement("article");
     card.className = "song-card";
-    card.dataset.accent = song.category;
+    card.dataset.accent = categoryOverride || song.category;
 
     const number = document.createElement("button");
     number.type = "button";
@@ -604,15 +643,15 @@
 
   function sortSongs(items) {
     return [...items].sort((a, b) => {
-      if (state.sort === "number") return Number(a.number) - Number(b.number);
-      if (state.sort === "artist") return collator.compare(a.artist, b.artist) || collator.compare(a.titleKo, b.titleKo);
       return collator.compare(a.titleKo, b.titleKo) || Number(a.number) - Number(b.number);
     });
   }
 
   function countByCategory(items) {
     return items.reduce((acc, song) => {
-      acc[song.category] = (acc[song.category] || 0) + 1;
+      [song.category, ...getAlsoCategories(song)].forEach(category => {
+        acc[category] = (acc[category] || 0) + 1;
+      });
       return acc;
     }, {});
   }
@@ -620,8 +659,7 @@
   function toggleSongFavorite(number) {
     const song = songsByNumber.get(number);
     if (!song) return;
-    const groupId = getGroupInfo(song).id;
-    const groupFavorite = state.artistFavorites.has(groupId);
+    const groupFavorite = getGroupIds(song).some(groupId => state.artistFavorites.has(groupId));
     const currentlyFavorite = isSongFavorite(song);
 
     if (groupFavorite) {
@@ -647,7 +685,7 @@
   }
 
   function toggleGroupFavorite(groupId) {
-    const groupSongs = songs.filter(song => getGroupInfo(song).id === groupId);
+    const groupSongs = songs.filter(song => getGroupIds(song).includes(groupId));
     if (state.artistFavorites.has(groupId)) {
       state.artistFavorites.delete(groupId);
       groupSongs.forEach(song => state.favoriteExclusions.delete(song.number));
@@ -662,7 +700,7 @@
   }
 
   function isSongFavorite(song) {
-    const groupFavorite = state.artistFavorites.has(getGroupInfo(song).id);
+    const groupFavorite = getGroupIds(song).some(groupId => state.artistFavorites.has(groupId));
     return state.favorites.has(song.number) || (groupFavorite && !state.favoriteExclusions.has(song.number));
   }
 
@@ -703,7 +741,7 @@
 
   function pruneFavoriteState() {
     const validNumbers = new Set(songs.map(song => song.number));
-    const validGroupIds = new Set(songs.map(song => getGroupInfo(song).id));
+    const validGroupIds = new Set(songs.flatMap(getGroupIds));
     state.favorites = new Set([...state.favorites].filter(number => validNumbers.has(number)));
     state.favoriteExclusions = new Set([...state.favoriteExclusions].filter(number => validNumbers.has(number)));
     state.artistFavorites = new Set([...state.artistFavorites].filter(groupId => validGroupIds.has(groupId)));
@@ -718,7 +756,8 @@
 
   function getVisibleChips(song) {
     const seen = new Set();
-    return [...getCustomTags(song), ...getAliases(song)]
+    const categoryTags = hasCategory(song, "애니메이션") ? ["애니메이션"] : [];
+    return [...categoryTags, ...getCustomTags(song), ...getAliases(song)]
       .filter(label => {
         const key = normalize(label);
         if (!key || seen.has(key)) return false;
@@ -799,7 +838,9 @@
       ...getCustomTags(song),
       ...getAliasCandidates(song),
       song.category,
-      song.group
+      ...getAlsoCategories(song),
+      song.group,
+      song.jpopGroup
     ].join(" "));
     searchTextCache.set(song, value);
     return value;

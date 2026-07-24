@@ -153,6 +153,13 @@
     const tags = normalizeTags(raw.tags);
     if (tags.length) song.tags = tags;
 
+    const alsoCategories = normalizeCategories(raw.alsoCategories)
+      .filter(category => category !== song.category);
+    if (alsoCategories.length) song.alsoCategories = alsoCategories;
+
+    const jpopGroup = clean(raw.jpopGroup);
+    if (jpopGroup) song.jpopGroup = jpopGroup;
+
     ["updateType", "updatedAt", "updateNote"].forEach(key => {
       const value = clean(raw[key]);
       if (value) song[key] = value;
@@ -173,6 +180,11 @@
         seen.add(key);
         return true;
       });
+  }
+
+  function normalizeCategories(value) {
+    const values = Array.isArray(value) ? value : String(value || "").split(",");
+    return [...new Set(values.map(clean).filter(category => categories.includes(category)))];
   }
 
   function clean(value) {
@@ -206,11 +218,15 @@
       const song = record.data;
       const haystack = [
         ...editableFields.map(key => song[key] || ""),
-        ...(song.tags || [])
+        ...(song.tags || []),
+        ...(song.alsoCategories || []),
+        song.jpopGroup || ""
       ].join(" ").toLocaleLowerCase("ko");
       const state = getRecordState(record);
       const matchesQuery = !query || haystack.includes(query);
-      const matchesCategory = category === "전체" || song.category === category;
+      const matchesCategory = category === "전체"
+        || song.category === category
+        || (song.alsoCategories || []).includes(category);
       const matchesChange = change === "전체"
         || (change === "변경" && state === "modified")
         || (change === "신규" && state === "new");
@@ -305,6 +321,8 @@
       values[key] = clean(control ? control.value : "");
     });
     values.tags = [...formTags];
+    values.alsoCategories = [...(getSelectedRecord()?.data.alsoCategories || [])];
+    values.jpopGroup = getSelectedRecord()?.data.jpopGroup || "";
     return normalizeSong(values);
   }
 

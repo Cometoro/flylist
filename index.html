@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0b0d14">
   <title>Flylist</title>
-  <link rel="stylesheet" href="./styles.css?v=20260722-5">
+  <link rel="stylesheet" href="./styles.css?v=20260724-2">
   <link rel="stylesheet" href="./custom.css?v=20260722-2">
   <script src="./data.js?v=20260722-4" defer></script>
-  <script src="./app.js?v=20260722-5" defer></script>
+  <script src="./app.js?v=20260724-2" defer></script>
 </head>
 <body id="top">
   <div id="mainApp">
@@ -38,14 +38,13 @@
       <div class="toolbar">
         <div id="resultSummary" class="result-summary"></div>
         <div class="toolbar-actions">
-          <button class="index-button" type="button" data-open-index aria-label="빠른 이동 목차 열기">☷ <span>목차</span></button>
+          <button class="index-button" type="button" data-open-index aria-label="빠른 이동 열기"><span class="index-button-icon" aria-hidden="true">⚡︎</span><span>빠른 이동</span></button>
           <label class="select-wrap">
             <span class="visually-hidden">정렬</span>
             <select id="sortSelect">
-              <option value="default">기본순</option>
-              <option value="number">번호순</option>
-              <option value="artist">가수순</option>
-              <option value="title">제목순</option>
+              <option value="count-desc">수록곡 많은순</option>
+              <option value="count-asc">수록곡 적은순</option>
+              <option value="group-name">가수·작품명순</option>
             </select>
           </label>
         </div>
@@ -76,7 +75,7 @@
       <nav id="favoriteCategoryTabs" class="favorite-tabs" aria-label="즐겨찾기 카테고리" role="tablist"></nav>
       <div class="favorite-toolbar">
         <div id="favoriteResultSummary" class="result-summary"></div>
-        <button class="index-button" type="button" data-open-index aria-label="즐겨찾기 빠른 이동 목차 열기">☷ <span>목차</span></button>
+        <button class="index-button" type="button" data-open-index aria-label="즐겨찾기 빠른 이동 열기"><span class="index-button-icon" aria-hidden="true">⚡︎</span><span>빠른 이동</span></button>
       </div>
       <div class="content-layout">
         <section id="favoriteSongList" class="song-list" aria-live="polite"></section>
